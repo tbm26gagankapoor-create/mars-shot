@@ -57,10 +57,11 @@ export function SectorDonut({ data }: SectorDonutProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: unknown, name: unknown) => [
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={((value: number, name: string) => [
                 `${value} companies`,
                 name,
-              ]}
+              ]) as any}
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",

@@ -58,6 +58,9 @@ export default async function DashboardPage() {
   const upcomingEvents = eventsResult.status === "fulfilled" ? eventsResult.value : null;
 
   const breachCount = stats?.breachedDeals ?? 0;
+  const sectorData = sectors
+    ?.filter((s) => s.sector !== null)
+    .map((s) => ({ sector: s.sector as string, count: s.count })) ?? [];
 
   return (
     <div className="space-y-6">
@@ -191,8 +194,8 @@ export default async function DashboardPage() {
             <PieChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {sectors && sectors.length > 0 ? (
-              <SectorDonut data={sectors} />
+            {sectorData.length > 0 ? (
+              <SectorDonut data={sectorData} />
             ) : (
               <div className="flex flex-col items-center justify-center py-8">
                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
