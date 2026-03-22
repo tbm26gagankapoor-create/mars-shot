@@ -1,5 +1,5 @@
 [build]
-  command = "npx prisma generate && next build"
+  command = "corepack enable pnpm && pnpm prisma generate && pnpm next build"
   publish = ".next"
 
 [build.environment]
