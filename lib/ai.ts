@@ -2,9 +2,14 @@ import Cerebras from "@cerebras/cerebras_cloud_sdk";
 
 // Cerebras Cloud SDK — Llama 3.1 70B
 // Free tier: 1M tokens/day
-const cerebras = new Cerebras({
-  apiKey: process.env.CEREBRAS_API_KEY,
-});
+// Lazy-initialized to avoid crashing at build time when the env var is absent.
+let _cerebras: Cerebras | null = null;
+function getCerebras(): Cerebras {
+  if (!_cerebras) {
+    _cerebras = new Cerebras({ apiKey: process.env.CEREBRAS_API_KEY });
+  }
+  return _cerebras;
+}
 
 export type AIExtractionResult = {
   companyName: string;
@@ -23,7 +28,7 @@ export type AIExtractionResult = {
  * Extract deal data from raw text (pasted lead, email body, WhatsApp message)
  */
 export async function extractDealFromText(rawText: string): Promise<AIExtractionResult> {
-  const response = await cerebras.chat.completions.create({
+  const response = await getCerebras().chat.completions.create({
     model: "llama-3.3-70b",
     messages: [
       {
@@ -74,7 +79,7 @@ export async function generateOnePager(dealData: {
   callNotes?: string;
   deckSummary?: string;
 }): Promise<string> {
-  const response = await cerebras.chat.completions.create({
+  const response = await getCerebras().chat.completions.create({
     model: "llama-3.3-70b",
     messages: [
       {
@@ -170,7 +175,7 @@ export async function generateEmailDraft(context: {
     ? `\n\nUse this as a starting point and personalize it:\nSubject: ${rendered.subject}\nBody:\n${rendered.body}`
     : "";
 
-  const response = await cerebras.chat.completions.create({
+  const response = await getCerebras().chat.completions.create({
     model: "llama-3.3-70b",
     messages: [
       {
@@ -198,4 +203,4 @@ export async function generateEmailDraft(context: {
   return JSON.parse(emailContent);
 }
 
-export { cerebras };
+export { getCerebras as cerebras };
