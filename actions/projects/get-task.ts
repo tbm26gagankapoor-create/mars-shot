@@ -1,45 +1,48 @@
 import { prismadb } from "@/lib/prisma";
-import { junctionTableHelpers } from "@/lib/junction-helpers";
 
 export const getTask = async (taskId: string) => {
-  const data = await prismadb.tasks.findFirst({
+  const task = await prismadb.tasks.findFirst({
     where: {
       id: taskId,
     },
-    include: {
-      assigned_user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      // Include documents through DocumentsToTasks junction table
-      documents: {
-        include: {
-          document: {
-            select: {
-              id: true,
-              document_name: true,
-              document_file_url: true,
-            },
+  });
+
+  if (!task) return null;
+
+  // Fetch documents linked through DocumentsToTasks junction table
+  const docLinks = await prismadb.documentsToTasks.findMany({
+    where: { taskId },
+  });
+  const documentIds = docLinks.map((link) => link.documentId);
+  const documents =
+    documentIds.length > 0
+      ? await prismadb.document.findMany({
+          where: { id: { in: documentIds } },
+          select: {
+            id: true,
+            name: true,
+            storagePath: true,
           },
-        },
-      },
-      comments: {
-        select: {
-          id: true,
-          comment: true,
-          createdAt: true,
-          assigned_user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
-          },
-        },
-      },
+        })
+      : [];
+
+  // Fetch comments for this task
+  const comments = await prismadb.tasksComments.findMany({
+    where: { task: taskId },
+    select: {
+      id: true,
+      comment: true,
+      createdAt: true,
+      user: true,
+    },
+    orderBy: {
+      createdAt: "desc",
     },
   });
-  return data;
+
+  return {
+    ...task,
+    documents,
+    comments,
+  };
 };

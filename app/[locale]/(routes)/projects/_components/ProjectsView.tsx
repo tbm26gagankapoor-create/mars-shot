@@ -1,10 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 
 import { getBoards } from "@/actions/projects/get-boards";
-
-import { authOptions } from "@/lib/auth";
 
 import NewTaskDialog from "../dialogs/NewTask";
 import NewProjectDialog from "../dialogs/NewProject";
@@ -17,14 +14,12 @@ import { columns } from "../table-components/columns";
 import { getTranslations } from "next-intl/server";
 
 const ProjectsView = async () => {
-  const session = await getServerSession(authOptions);
   const t = await getTranslations("ProjectsPage");
 
-  if (!session) return null;
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
-  const userId = session.user.id;
-
-  const boards: any = await getBoards(userId!);
+  const boards: any = await getBoards(userId);
 
   return (
     <>

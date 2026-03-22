@@ -1,35 +1,34 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import type { DocumentType } from "@prisma/client";
 
 interface CreateDocumentInput {
   name: string;
-  url: string;
-  key: string;
-  size: number;
-  mimeType: string;
+  storagePath: string;
+  fileSize?: number;
+  mimeType?: string;
+  type?: DocumentType;
+  dealId?: string;
+  portfolioCompanyId?: string;
+  contactId?: string;
 }
 
 export async function createDocument(input: CreateDocumentInput) {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new Error("Unauthorized");
-
-  await prismadb.documents.create({
+  const doc = await prismadb.document.create({
     data: {
-      v: 0,
-      document_name: input.name,
-      description: "new document",
-      document_file_url: input.url,
-      key: input.key,
-      size: input.size,
-      document_file_mimeType: input.mimeType,
-      createdBy: session.user.id,
-      assigned_user: session.user.id,
+      name: input.name,
+      type: input.type || "OTHER",
+      storagePath: input.storagePath,
+      fileSize: input.fileSize,
+      mimeType: input.mimeType,
+      dealId: input.dealId,
+      portfolioCompanyId: input.portfolioCompanyId,
+      contactId: input.contactId,
     },
   });
 
   revalidatePath("/[locale]/(routes)/documents");
+  return doc;
 }

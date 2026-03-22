@@ -1,12 +1,10 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export const markTaskDone = async (taskId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   if (!taskId) return { error: "Missing task ID" };
 
@@ -15,7 +13,7 @@ export const markTaskDone = async (taskId: string) => {
       where: { id: taskId },
       data: {
         taskStatus: "COMPLETE",
-        updatedBy: session.user.id,
+        updatedBy: userId,
       },
     });
 

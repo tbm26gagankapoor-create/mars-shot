@@ -1,6 +1,4 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -10,8 +8,8 @@ export const updateKanbanPosition = async (data: {
   resourceSectionId: string;
   destinationSectionId: string;
 }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const {
     resourceList,
@@ -32,7 +30,7 @@ export const updateKanbanPosition = async (data: {
           data: {
             section: resourceSectionId,
             position: key,
-            updatedBy: session.user.id,
+            updatedBy: userId,
           },
         });
       }
@@ -45,7 +43,7 @@ export const updateKanbanPosition = async (data: {
         data: {
           section: destinationSectionId,
           position: key,
-          updatedBy: session.user.id,
+          updatedBy: userId,
         },
       });
     }

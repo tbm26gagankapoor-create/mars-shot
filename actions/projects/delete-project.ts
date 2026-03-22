@@ -1,12 +1,10 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export const deleteProject = async (projectId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   if (!projectId) return { error: "Missing project ID" };
 

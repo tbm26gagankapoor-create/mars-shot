@@ -1,83 +1,103 @@
-import React from "react";
-import Container from "../components/ui/Container";
-
-import { BarChartDemo } from "@/components/tremor/BarChart";
 import {
-  getUsersByMonth,
-  getUsersByMonthAndYear,
-  getUsersCountOverall,
-} from "@/actions/get-users";
-import { AreaChartDemo } from "@/components/tremor/AreaChart";
-import { getTasksByMonth } from "@/actions/projects/get-tasks";
-import {
-  getOpportunitiesByMonth,
-  getOpportunitiesByStage,
-} from "@/actions/crm/get-opportunities";
-import { getTranslations } from "next-intl/server";
+  getPipelineVelocity,
+  getConversionRates,
+  getSourceAttribution,
+  getPortfolioMetrics,
+  getEcosystemHealth,
+  getDealFunnel,
+  getDashboardStats,
+} from "@/actions/reports";
 
-type Props = {};
+import { MetricCard } from "@/components/reports/metric-card";
+import { PipelineVelocity } from "@/components/reports/pipeline-velocity";
+import { ConversionFunnel } from "@/components/reports/conversion-funnel";
+import { SourceAttribution } from "@/components/reports/source-attribution";
+import { EcosystemHealth } from "@/components/reports/ecosystem-health";
+import { PortfolioMetrics } from "@/components/reports/portfolio-metrics";
 
-const ReportsPage = async (props: Props) => {
-  const newUsersOverall = await getUsersByMonth();
-  const newUserByMonthOverall = await getUsersCountOverall();
-  const newUsers = await getUsersByMonthAndYear(2023);
-  const newUsers2024 = await getUsersByMonthAndYear(2024);
-  const tasks = await getTasksByMonth();
-  const oppsByStage = await getOpportunitiesByStage();
-  const oppsByMonth = await getOpportunitiesByMonth();
-  const t = await getTranslations("ReportsPage");
-
-  //console.log("newUserByMonthOverall:", newUserByMonthOverall);
-  //console.log("New users overall:", newUsersOverall);
+export default async function ReportsPage() {
+  const [
+    pipelineVelocity,
+    conversionRates,
+    sourceAttribution,
+    portfolioMetrics,
+    ecosystemHealth,
+    dealFunnel,
+    dashboardStats,
+  ] = await Promise.all([
+    getPipelineVelocity(),
+    getConversionRates(),
+    getSourceAttribution(),
+    getPortfolioMetrics(),
+    getEcosystemHealth(),
+    getDealFunnel(),
+    getDashboardStats(),
+  ]);
 
   return (
-    <Container
-      title={t("title")}
-      description={t("description")}
-    >
-      <div className="pt-5 space-y-3">
-        {/*         <BarChartDemo
-          chartData={newUsersOverall}
-          title={"Number of new users by month (Overall)"}
-        /> */}
-        <BarChartDemo
-          chartData={newUserByMonthOverall}
-          title={t("newUsersByMonthOverallTitle")}
-        />
-        <AreaChartDemo
-          chartData={newUserByMonthOverall}
-          title={t("newUsersByMonthOverallChart")}
-        />
-      </div>
-      <div className="pt-5 space-y-3">
-        <BarChartDemo
-          chartData={newUsers}
-          title={t("newUsersByMonth2023Title")}
-        />
-        <AreaChartDemo chartData={newUsers} title={t("newUsersByMonth2023Chart")} />
-      </div>
-      <div className="pt-5 space-y-3">
-        <BarChartDemo
-          chartData={newUsers2024}
-          title={t("newUsersByMonth2024Title")}
-        />
-        <AreaChartDemo chartData={newUsers2024} title={t("newUsersByMonth2023Chart")} />
-      </div>
-      <div className="pt-5">
-        <BarChartDemo chartData={tasks} title={t("newTasksByMonth2023")} />
-      </div>
-      <div className="pt-5">
-        <BarChartDemo chartData={oppsByStage} title={t("oppsBySalesStage")} />
+    <div className="flex-1 space-y-6 p-6">
+      <div>
+        <h2 className="font-display text-2xl font-semibold tracking-tight">Reports</h2>
+        <p className="text-muted-foreground">
+          Pipeline analytics and portfolio performance
+        </p>
       </div>
 
-      <div className="pt-5">
-        <BarChartDemo
-          chartData={oppsByMonth}
-          title={t("newOppsByMonth2023")}
+      {/* Row 1: Key metric cards */}
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        <MetricCard
+          title="Active Deals"
+          value={dashboardStats.activeDeals}
+          description="in pipeline"
+        />
+        <MetricCard
+          title="Draft Deals"
+          value={dashboardStats.draftDeals}
+          description="pending submission"
+        />
+        <MetricCard
+          title="Portfolio"
+          value={dashboardStats.portfolioCount}
+          description="companies"
+        />
+        <MetricCard
+          title="Contacts"
+          value={dashboardStats.contactCount}
+          description="in ecosystem"
+        />
+        <MetricCard
+          title="Breached SLAs"
+          value={dashboardStats.breachedSla}
+          trend={dashboardStats.breachedSla > 0 ? "down" : "neutral"}
+          trendValue={dashboardStats.breachedSla > 0 ? "Needs attention" : "All clear"}
         />
       </div>
-    </Container>
+
+      {/* Row 2: Pipeline velocity + Deal funnel */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <PipelineVelocity data={pipelineVelocity} />
+        <ConversionFunnel data={dealFunnel.map((f, i) => ({
+          stage: f.stage,
+          count: f.count,
+          conversionRate:
+            i === 0
+              ? 100
+              : dealFunnel[0].count > 0
+                ? Math.round((f.count / dealFunnel[0].count) * 100)
+                : 0,
+        }))} />
+      </div>
+
+      {/* Row 3: Source attribution + Ecosystem health */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <SourceAttribution data={sourceAttribution} />
+        <EcosystemHealth data={ecosystemHealth} />
+      </div>
+
+      {/* Row 4: Portfolio metrics */}
+      <div className="grid gap-4 grid-cols-1">
+        <PortfolioMetrics data={portfolioMetrics} />
+      </div>
+    </div>
   );
-};
-
-export default ReportsPage;
+}

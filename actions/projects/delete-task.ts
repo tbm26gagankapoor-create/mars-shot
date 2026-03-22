@@ -1,12 +1,10 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export const deleteTask = async (data: { id: string; section?: string }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { id } = data;
   if (!id) return { error: "Missing task ID" };
@@ -37,7 +35,7 @@ export const deleteTask = async (data: { id: string; section?: string }) => {
         await prismadb.tasks.update({
           where: { id: tasks[key].id },
           data: {
-            updatedBy: session.user.id,
+            updatedBy: userId,
             position,
           },
         });

@@ -64,3 +64,6 @@ playwright/.cache/
 playwright/.auth/
 
 .worktrees/
+
+# Local Netlify folder
+.netlify

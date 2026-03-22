@@ -1,26 +1,47 @@
 "use client";
 
-import { Card, Title, BarChart, Subtitle } from "@tremor/react";
+import {
+  BarChart as RechartsBar,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-const dataFormatter = (number: number) => {
-  // return number no decimal places
-  return number.toFixed(0);
-};
-
-export const BarChartDemo = ({ chartData, title }: any) => {
+export function BarChartComponent({
+  chartData,
+  title,
+}: {
+  chartData: any[];
+  title: string;
+}) {
   return (
-    <Card className="rounded-md">
-      <Title>{title}</Title>
-
-      <BarChart
-        className="mt-6"
-        data={chartData}
-        index="name"
-        categories={["Number"]}
-        colors={["orange"]}
-        valueFormatter={dataFormatter}
-        yAxisWidth={48}
-      />
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <RechartsBar data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="value" fill="hsl(var(--primary))" />
+          </RechartsBar>
+        </ResponsiveContainer>
+      </CardContent>
     </Card>
   );
-};
+}
+
+// Keep the old export name for backward compatibility
+export const BarChartDemo = BarChartComponent;

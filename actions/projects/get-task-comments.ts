@@ -8,14 +8,6 @@ export const getTaskComments = async (taskId: string) => {
     where: {
       task: taskId,
     },
-    include: {
-      assigned_user: {
-        select: {
-          name: true,
-          avatar: true,
-        },
-      },
-    },
     orderBy: {
       createdAt: "desc",
     },

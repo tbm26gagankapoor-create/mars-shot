@@ -1,55 +1,62 @@
-import Feedback from "./Feedback";
-import FulltextSearch from "./FulltextSearch";
+"use client";
 
+import { usePathname } from "next/navigation";
+import { ChevronRight, Search } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { SetLanguage } from "@/components/SetLanguage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandComponent } from "@/components/CommandComponent";
-import SupportComponent from "@/components/support";
+import { LogoutButton } from "./logout-button";
 
-type Props = {
-  id: string;
-  lang: string;
+const pathLabels: Record<string, string> = {
+  "/": "Dashboard",
+  "/deals": "Deal Pipeline",
+  "/deals/new": "New Deal",
+  "/deals/drafts": "Drafts",
+  "/portfolio": "Portfolio",
+  "/ecosystem": "Ecosystem",
+  "/calendar": "Calendar",
+  "/documents": "Documents",
+  "/term-sheets": "Term Sheets",
+  "/reports": "Reports",
+  "/email-templates": "Templates",
+  "/projects": "Boards",
+  "/settings": "Settings",
 };
 
-/**
- * Header Component - Task Group 3.2
- *
- * Reorganized header for new layout with shadcn dashboard-01 pattern.
- *
- * Layout Structure:
- * - Left side: SidebarTrigger (mobile menu), FulltextSearch
- * - Right side: CommandComponent, SetLanguage, Feedback, ThemeToggle, SupportComponent
- *
- * Changes from previous version:
- * - Removed AvatarDropdown (functionality moved to nav-user section in sidebar)
- * - Removed unused props: name, email, avatar (now only used by nav-user)
- * - Optimized spacing and alignment for new layout
- * - SidebarTrigger added in Task 2.8.0 for mobile menu control
- *
- * Note: User profile functionality (avatar, name, email, user actions) is now
- * handled by the NavUser component in the sidebar footer (Task 3.1).
- */
-const Header = ({ id, lang }: Props) => {
+function getBreadcrumb(pathname: string) {
+  const path = pathname.replace(/^\/[a-z]{2}(\/|$)/, "/");
+  if (path === "/" || path === "") return "Dashboard";
+  // Try exact match first
+  if (pathLabels[path]) return pathLabels[path];
+  // Try parent path for detail pages like /deals/[id]
+  const segments = path.split("/").filter(Boolean);
+  const parentPath = "/" + segments[0];
+  return pathLabels[parentPath] || segments[0].charAt(0).toUpperCase() + segments[0].slice(1).replace(/-/g, " ");
+}
+
+const Header = () => {
+  const pathname = usePathname();
+  const breadcrumb = getBreadcrumb(pathname);
+
   return (
-    <>
-      <div className="flex h-16 shrink-0 items-center justify-between gap-2 px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+      <div className="flex h-14 shrink-0 items-center justify-between gap-2 px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <FulltextSearch />
+          <span className="text-xs text-muted-foreground/60">Mars Shot</span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
+          <span className="text-sm font-medium text-foreground">{breadcrumb}</span>
         </div>
         <div className="flex items-center gap-2">
           <CommandComponent />
-          <SetLanguage userId={id} />
-          <Feedback />
           <ThemeToggle />
-          <SupportComponent />
+          <LogoutButton />
         </div>
       </div>
       <Separator />
-    </>
+    </div>
   );
 };
 

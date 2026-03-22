@@ -1,33 +1,44 @@
-import Heading from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
-import React from "react";
+import { cn } from "@/lib/utils";
+import { Lock } from "lucide-react";
 
 interface ContainerProps {
-  title: string;
-  description: string;
-  visibility?: string;
   children: React.ReactNode;
+  className?: string;
+  title?: string;
+  description?: string;
+  visibility?: string;
 }
 
-const Container = ({
+export default function Container({
+  children,
+  className,
   title,
   description,
   visibility,
-  children,
-}: ContainerProps) => {
+}: ContainerProps) {
   return (
-    <div className="flex flex-col flex-1 h-full w-full">
-      <Heading
-        title={title}
-        description={description}
-        visibility={visibility}
-      />
-      <Separator className="my-4" />
-      <div className="flex-1 min-h-0 w-full">
-        {children}
-      </div>
+    <div
+      className={cn(
+        "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8",
+        className
+      )}
+    >
+      {(title || description) && (
+        <div className="py-4">
+          <div className="flex items-center gap-2">
+            {title && (
+              <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+            )}
+            {visibility === "private" && (
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
+        </div>
+      )}
+      {children}
     </div>
   );
-};
-
-export default Container;
+}

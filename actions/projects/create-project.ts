@@ -1,6 +1,4 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -9,8 +7,8 @@ export const createProject = async (data: {
   description: string;
   visibility: string;
 }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { title, description, visibility } = data;
   if (!title) return { error: "Missing project name" };
@@ -22,13 +20,13 @@ export const createProject = async (data: {
     const newBoard = await prismadb.boards.create({
       data: {
         v: 0,
-        user: session.user.id,
+        user: userId,
         title,
         description,
         position: boardsCount > 0 ? boardsCount : 0,
         visibility,
-        sharedWith: [session.user.id],
-        createdBy: session.user.id,
+        sharedWith: [userId],
+        createdBy: userId,
       },
     });
 

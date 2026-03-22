@@ -1,54 +1,33 @@
+import { NextRequest, NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
-import { getToken } from "next-auth/jwt";
-import { NextRequest, NextResponse } from "next/server";
 
 const intlMiddleware = createMiddleware(routing);
 
-// Admin-only: require session.user.isAdmin
-const ADMIN_ONLY_PATHS = [
-  "/api/user/activateAdmin",
-  "/api/user/deactivateAdmin",
-  "/api/user/activate",
-  "/api/user/deactivate",
-  "/api/user/inviteuser",
-  "/api/admin",
-];
+export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-export async function proxy(req: NextRequest) {
-  const path = req.nextUrl.pathname;
-
-  // Inngest webhook — pass through, Inngest handles its own auth via signing key
-  if (path.startsWith("/api/inngest")) {
-    return NextResponse.next();
+  // Skip auth check for sign-in page, API routes, and static assets
+  if (
+    pathname.includes("/sign-in") ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/_vercel") ||
+    pathname.includes(".")
+  ) {
+    return intlMiddleware(request);
   }
 
-  // Admin-only routes — check JWT token's isAdmin flag
-  if (ADMIN_ONLY_PATHS.some((p) => path.startsWith(p))) {
-    const token = await getToken({ req, secret: process.env.JWT_SECRET });
-    if (!token) {
-      return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    }
-    if (!token.isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    return NextResponse.next();
+  // Check for demo session cookie
+  const session = request.cookies.get("marsshot_session")?.value;
+  if (!session || session !== "demo_authenticated") {
+    const signInUrl = new URL("/en/sign-in", request.url);
+    return NextResponse.redirect(signInUrl);
   }
 
-  // Non-API routes — delegate to next-intl
-  return intlMiddleware(req);
+  return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: [
-    // Admin-only API paths
-    "/api/user/activateAdmin/:path*",
-    "/api/user/deactivateAdmin/:path*",
-    "/api/user/activate/:path*",
-    "/api/user/deactivate/:path*",
-    "/api/user/inviteuser",
-    "/api/admin/:path*",
-    // All non-API routes (existing intl matcher)
-    "/((?!api|trpc|_next|_vercel|.*\\..*).*)",
-  ],
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };

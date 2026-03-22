@@ -1,78 +1,62 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-
-import { labels, priorities, statuses } from "../data/data";
-import { Task } from "../data/schema";
+import { DocumentRow } from "../data/schema";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
-import moment from "moment";
+import { format } from "date-fns";
 
-export const columns: ColumnDef<Task>[] = [
+export const columns: ColumnDef<DocumentRow>[] = [
   {
     accessorKey: "createdAt",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Date Created" />
-    ),
-    cell: ({ row }) => (
-      <div className="w-[80px]">
-        {moment(row.getValue("createdAt")).format("YY-MM-DD")}
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "assigned_to_user",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Assigned to" />
-    ),
-
-    cell: ({ row }) => (
-      <div className="w-[150px]">
-        {
-          //@ts-ignore
-          //TODO: fix this
-          row.getValue("assigned_to_user")?.name ?? "Unassigned"
-        }
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "document_name",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Document name" />
+      <DataTableColumnHeader column={column} title="Date" />
     ),
     cell: ({ row }) => {
-      const label = labels.find(
-        (label) => label.value === row.original.document_name
-      );
-
+      const val = row.getValue("createdAt");
       return (
-        <div className="flex space-x-2">
-          {label && <Badge variant="outline">{label.label}</Badge>}
-          <span className="max-w-[500px] truncate font-medium">
-            {row.getValue("document_name")}
-          </span>
+        <div className="w-[80px]">
+          {val ? format(new Date(val as string), "yy-MM-dd") : "—"}
         </div>
       );
     },
+    enableSorting: true,
+    enableHiding: false,
   },
   {
-    accessorKey: "description",
+    accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Description" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
     cell: ({ row }) => (
-      <div className="w-[300px]">{row.getValue("description")}</div>
+      <div className="flex space-x-2">
+        <span className="max-w-[400px] truncate font-medium">
+          {row.getValue("name")}
+        </span>
+      </div>
     ),
   },
-
+  {
+    accessorKey: "type",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Type" />
+    ),
+    cell: ({ row }) => (
+      <Badge variant="outline">{row.getValue("type")}</Badge>
+    ),
+  },
+  {
+    accessorKey: "mimeType",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Format" />
+    ),
+    cell: ({ row }) => (
+      <div className="w-[120px] truncate text-muted-foreground">
+        {(row.getValue("mimeType") as string) ?? "—"}
+      </div>
+    ),
+  },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,

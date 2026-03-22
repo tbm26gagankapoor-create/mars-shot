@@ -1,260 +1,246 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Crosshair,
+  Briefcase,
+  Users,
+  Settings,
+  Calendar,
+  FileText,
+  ScrollText,
+  BarChart3,
+  Mail,
+  Kanban,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { NavMain } from "./nav-main";
-import { NavUser } from "./nav-user";
-import getDashboardMenuItem from "./menu-items/Dashboard";
-import getCrmMenuItem from "./menu-items/Crm";
-import getProjectsMenuItem from "./menu-items/Projects";
-import getEmailsMenuItem from "./menu-items/Emails";
-import getEmployeesMenuItem from "./menu-items/Employees";
-import getReportsMenuItem from "./menu-items/Reports";
-import getDocumentsMenuItem from "./menu-items/Documents";
-import getDataboxMenuItem from "./menu-items/Databoxes";
-import getAdministrationMenuItem from "./menu-items/Administration";
 
-/**
- * AppSidebar Component - Task Groups 1.2, 2.2-2.7, 3.1, 5.3, 5.4
- *
- * Core sidebar component for NextCRM application layout.
- * Implements shadcn/ui sidebar pattern with:
- * - Logo and "N" branding symbol with rotation animation
- * - Build version display in footer (when expanded)
- * - Navigation with Dashboard and module items
- * - Nav-user section in footer for user profile and actions
- *
- * Phase 2 Updates:
- * - Task 2.2: Added Dashboard menu item integration
- * - Task 2.3: Added CRM module navigation (collapsible group with module filtering)
- * - Task 2.4: Added Projects module navigation (simple item with module filtering)
- * - Task 2.5: Added Emails module navigation (simple item with module filtering)
- * - Task 2.6: Added remaining module navigation items (Employees, Reports, Documents, Databox)
- * - Task 2.7: Added Administration menu with role-based visibility (is_admin check)
- * - NavMain component renders all enabled module navigation items
- * - Module filtering ensures only enabled modules appear in navigation
- * - Role-based visibility: Administration only shows for admin users
- *
- * Phase 3 Updates:
- * - Task 3.1: Added NavUser component in SidebarFooter
- * - NavUser displays user avatar, name, email
- * - NavUser provides dropdown with user actions (Profile, Settings, Logout)
- * - NavUser adapts to collapsed/expanded sidebar states
- * - Build version moved above NavUser in footer
- *
- * Phase 5 Updates (Design Consistency):
- * - Task 5.3: Removed duration-200 from app name animation (uses Tailwind default)
- * - Task 5.3: Kept duration-500 on "N" symbol for intentional brand emphasis
- * - Task 5.4: Changed build version text-gray-500 to text-muted-foreground for theme support
- *
- * @param modules - Array of enabled modules from system_Modules_Enabled table
- * @param dict - Localization dictionary for navigation labels
- * @param build - Build number for version display
- * @param session - User session data for role-based navigation and user profile
- */
+const workspaces = [
+  {
+    label: "Dashboard",
+    href: "/",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Deals",
+    href: "/deals",
+    icon: Crosshair,
+    description: "Pipeline & deal flow",
+  },
+  {
+    label: "Portfolio",
+    href: "/portfolio",
+    icon: Briefcase,
+    description: "Invested companies",
+  },
+  {
+    label: "Ecosystem",
+    href: "/ecosystem",
+    icon: Users,
+    description: "VCs & contacts",
+  },
+];
 
-interface Module {
-  id: string;
-  name: string;
-  enabled: boolean;
-  position?: number;
-}
+const tools = [
+  {
+    label: "Calendar",
+    href: "/calendar",
+    icon: Calendar,
+  },
+  {
+    label: "Documents",
+    href: "/documents",
+    icon: FileText,
+  },
+  {
+    label: "Term Sheets",
+    href: "/term-sheets",
+    icon: ScrollText,
+  },
+  {
+    label: "Reports",
+    href: "/reports",
+    icon: BarChart3,
+  },
+  {
+    label: "Templates",
+    href: "/email-templates",
+    icon: Mail,
+  },
+  {
+    label: "Portfolio Boards",
+    href: "/projects",
+    icon: Kanban,
+  },
+];
 
-interface User {
-  id: string;
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-  isAdmin?: boolean;
-  userStatus?: string;
-  userLanguage?: string;
-  lastLoginAt?: Date;
-}
-
-interface Session {
-  user: User;
-}
+const bottomNav = [
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: Settings,
+  },
+];
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  modules: Module[];
-  dict: any;
-  build: number;
-  session: Session;
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
 }
 
-export function AppSidebar({
-  modules,
-  dict,
-  build,
-  session,
-  ...props
-}: AppSidebarProps) {
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const { state } = useSidebar();
   const isExpanded = state === "expanded";
+  const pathname = usePathname();
 
-  // Build navigation items array
-  const navItems = [];
+  // Strip locale prefix for matching
+  const path = pathname.replace(/^\/[a-z]{2}(\/|$)/, "/");
 
-  // Dashboard menu item (always visible)
-  const dashboardItem = getDashboardMenuItem({
-    title: dict?.dashboard || "Dashboard",
-  });
-  navItems.push(dashboardItem);
-
-  // Task 2.3: CRM module navigation (with module filtering)
-  // Only show if CRM module is enabled
-  const crmModule = modules.find(
-    (menuItem: any) => menuItem.name === "crm" && menuItem.enabled,
-  );
-  if (crmModule && dict?.crm) {
-    const crmItem = getCrmMenuItem({
-      localizations: dict.crm,
-    });
-    navItems.push(crmItem);
+  function isActive(href: string) {
+    if (href === "/") return path === "/" || path === "";
+    return path.startsWith(href);
   }
-
-  // Task 2.4: Projects module navigation (with module filtering)
-  // Only show if Projects module is enabled
-  const projectsModule = modules.find(
-    (menuItem: any) => menuItem.name === "projects" && menuItem.enabled,
-  );
-  if (projectsModule && dict?.projects) {
-    const projectsItem = getProjectsMenuItem({
-      title: dict.projects,
-    });
-    navItems.push(projectsItem);
-  }
-
-  // Task 2.5: Emails module navigation (with module filtering)
-  // Only show if Emails module is enabled
-  const emailsModule = modules.find(
-    (menuItem: any) => menuItem.name === "emails" && menuItem.enabled,
-  );
-  if (emailsModule && dict?.emails) {
-    const emailsItem = getEmailsMenuItem({
-      title: dict.emails,
-    });
-    navItems.push(emailsItem);
-  }
-
-  // Task 2.6.2: Employees module navigation (with module filtering)
-  // Only show if Employees module is enabled
-  const employeesModule = modules.find(
-    (menuItem: any) => menuItem.name === "employee" && menuItem.enabled,
-  );
-  if (employeesModule) {
-    const employeesItem = getEmployeesMenuItem({
-      title: "Employees", // No translation in dict.ModuleMenu, using default
-    });
-    navItems.push(employeesItem);
-  }
-
-  // Task 2.6.4: Reports module navigation (with module filtering)
-  // Only show if Reports module is enabled
-  const reportsModule = modules.find(
-    (menuItem: any) => menuItem.name === "reports" && menuItem.enabled,
-  );
-  if (reportsModule && dict?.reports) {
-    const reportsItem = getReportsMenuItem({
-      title: dict.reports,
-    });
-    navItems.push(reportsItem);
-  }
-
-  // Task 2.6.5: Documents module navigation (with module filtering)
-  // Only show if Documents module is enabled
-  const documentsModule = modules.find(
-    (menuItem: any) => menuItem.name === "documents" && menuItem.enabled,
-  );
-  if (documentsModule && dict?.documents) {
-    const documentsItem = getDocumentsMenuItem({
-      title: dict.documents,
-    });
-    navItems.push(documentsItem);
-  }
-
-  // Task 2.6.6: Databox module navigation (with module filtering)
-  // Only show if Databox module is enabled
-  const databoxModule = modules.find(
-    (menuItem: any) => menuItem.name === "databox" && menuItem.enabled,
-  );
-  if (databoxModule) {
-    const databoxItem = getDataboxMenuItem({
-      title: "Databoxes", // No translation in dict.ModuleMenu, using default
-    });
-    navItems.push(databoxItem);
-  }
-
-  // Task 2.7: Administration menu navigation (with role-based visibility)
-  // Only show if user is an admin (session.user.isAdmin === true)
-  if (session?.user?.isAdmin && dict?.settings) {
-    const administrationItem = getAdministrationMenuItem({
-      title: dict.settings,
-    });
-    navItems.push(administrationItem);
-  }
-
-  // Prepare user data for NavUser component
-  const userData = {
-    id: session.user.id,
-    name: session.user.name,
-    email: session.user.email,
-    avatar: session.user.image,
-  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      {/* Header with Logo and Branding */}
       <SidebarHeader>
         <div
           className={cn(
-            "flex items-center py-1",
-            isExpanded ? "gap-x-4" : "justify-center",
+            "flex items-center py-3",
+            isExpanded ? "gap-3 px-1" : "justify-center"
           )}
         >
-          {/* "N" Branding Symbol with rotation animation */}
-          <div
-            className={cn(
-              "flex-shrink-0 border rounded-full px-4 py-2 transition-transform duration-500",
-              isExpanded && "rotate-[360deg]",
-            )}
-          >
-            N
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 shadow-sm shadow-orange-500/25 flex items-center justify-center shrink-0">
+            <span className="text-sm font-bold text-white leading-none tracking-tight">M</span>
           </div>
-
-          {/* App Name - visible when expanded, hidden when collapsed */}
-          <h1
-            className={cn(
-              "origin-left font-medium text-xl transition-all overflow-hidden whitespace-nowrap",
-              !isExpanded ? "w-0 opacity-0" : "w-auto opacity-100",
-            )}
-          >
-            {process.env.NEXT_PUBLIC_APP_NAME || "NextCRM"}
-          </h1>
+          {isExpanded && (
+            <div>
+              <h1 className="font-display font-semibold text-sm text-sidebar-primary tracking-tight">
+                Mars Shot
+              </h1>
+              <p className="text-[10px] text-sidebar-foreground/50 -mt-0.5 tracking-wider uppercase">
+                Venture Capital
+              </p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
-      {/* Main Content - Navigation */}
       <SidebarContent>
-        {/* NavMain component with all enabled module navigation items */}
-        <NavMain items={navItems} dict={dict} />
+        <SidebarGroup>
+          <SidebarGroupLabel>Workspaces</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {workspaces.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Tools</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {tools.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {bottomNav.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer with NavUser and Build Version */}
       <SidebarFooter>
-        {/* Task 3.1: NavUser component with user profile and actions */}
-        <NavUser user={userData} />
+        <SidebarSeparator />
+        <div
+          className={cn(
+            "flex items-center py-2",
+            isExpanded ? "gap-3 px-1" : "justify-center"
+          )}
+        >
+          <div className="h-7 w-7 rounded-full bg-sidebar-accent flex items-center justify-center text-[11px] font-medium text-sidebar-primary shrink-0">
+            VP
+          </div>
+          {isExpanded && (
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-sidebar-primary/80 truncate">
+                {user?.name || "VP, Investments"}
+              </p>
+              <p className="text-[10px] text-sidebar-foreground/40 truncate">
+                {user?.email || "vp@marsshot.vc"}
+              </p>
+            </div>
+          )}
+        </div>
       </SidebarFooter>
 
-      {/* Rail for toggling sidebar on desktop */}
       <SidebarRail />
     </Sidebar>
   );

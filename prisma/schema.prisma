@@ -1,877 +1,613 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model crm_Accounts {
-  id                   String    @id @default(uuid()) @db.Uuid
-  v                    Int       @map("__v")
-  createdAt            DateTime  @default(now())
-  createdBy            String?   @db.Uuid
-  updatedAt            DateTime? @updatedAt
-  updatedBy            String?   @db.Uuid
-  annual_revenue       String?
-  assigned_to          String?   @db.Uuid
-  billing_city         String?
-  billing_country      String?
-  billing_postal_code  String?
-  billing_state        String?
-  billing_street       String?
-  company_id           String?
-  description          String?
-  email                String?
-  employees            String?
-  fax                  String?
-  industry             String?   @db.Uuid
-  member_of            String?
-  name                 String
-  office_phone         String?
-  shipping_city        String?
-  shipping_country     String?
-  shipping_postal_code String?
-  shipping_state       String?
-  shipping_street      String?
-  status               String?   @default("Inactive")
-  type                 String?   @default("Customer")
-  vat                  String?
-  website              String?
+// ─── Enums ─────────────────────────────────────────────
 
-  contacts           crm_Contacts[]
-  leads              crm_Leads[]
-  industry_type      crm_Industry_Type?    @relation(fields: [industry], references: [id])
-  opportunities      crm_Opportunities[]
-  assigned_to_user   Users?                @relation("AccountAssignedTo", fields: [assigned_to], references: [id])
-  crm_accounts_tasks crm_Accounts_Tasks[]
-  contracts          crm_Contracts[]
-  documents          DocumentsToAccounts[]
-  watchers           AccountWatchers[]
-  embedding          crm_Embeddings_Accounts?
-
-  @@index([assigned_to])
-  @@index([industry])
-  @@index([createdBy])
-  @@index([updatedBy])
-  @@index([status])
-  @@index([type])
-  @@index([createdAt])
+enum DealStage {
+  DEAL_SOURCE
+  RADAR
+  SCREENING
+  INTRO_CALL
+  PARTNER_GUT_CHECK
+  ACTIVE_DD
+  PARTNER_REVIEW
+  DECISION
 }
 
-model crm_Leads {
-  id String @id @default(uuid()) @db.Uuid
-  v  Int    @default(0) @map("__v")
-
-  createdAt         DateTime?          @default(now())
-  createdBy         String?            @db.Uuid
-  updatedAt         DateTime?          @updatedAt
-  updatedBy         String?            @db.Uuid
-  firstName         String?
-  lastName          String
-  company           String?
-  jobTitle          String?
-  email             String?
-  phone             String?
-  description       String?
-  lead_source       String?
-  refered_by        String?
-  campaign          String?
-  status            String?            @default("NEW")
-  type              String?            @default("DEMO")
-  assigned_to       String?            @db.Uuid
-  assigned_to_user  Users?             @relation("LeadAssignedTo", fields: [assigned_to], references: [id])
-  accountsIDs       String?            @db.Uuid
-  assigned_accounts crm_Accounts?      @relation(fields: [accountsIDs], references: [id])
-  documents         DocumentsToLeads[]
-  embedding         crm_Embeddings_Leads?
-
-  @@index([assigned_to])
-  @@index([accountsIDs])
-  @@index([createdBy])
-  @@index([updatedBy])
-  @@index([status])
-  @@index([type])
-  @@index([createdAt])
-}
-
-enum crm_Lead_Status {
-  NEW
-  CONTACTED
-  QUALIFIED
-  LOST
-}
-
-enum crm_Lead_Type {
-  DEMO
-}
-
-model crm_Opportunities {
-  id               String                  @id @default(uuid()) @db.Uuid
-  v                Int                     @default(0) @map("__v")
-  account          String?                 @db.Uuid
-  assigned_to      String?                 @db.Uuid
-  budget           BigInt                  @default(0)
-  campaign         String?                 @db.Uuid
-  close_date       DateTime?
-  contact          String?                 @db.Uuid
-  created_by       String?                 @db.Uuid
-  createdBy        String?                 @db.Uuid
-  created_on       DateTime?               @default(now())
-  createdAt        DateTime                @default(now())
-  last_activity    DateTime?
-  updatedAt        DateTime?               @updatedAt
-  updatedBy        String?                 @db.Uuid
-  last_activity_by String?                 @db.Uuid
-  currency         String?
-  description      String?
-  expected_revenue BigInt                  @default(0)
-  name             String?
-  next_step        String?
-  sales_stage      String?                 @db.Uuid
-  type             String?                 @db.Uuid
-  status           crm_Opportunity_Status? @default(ACTIVE)
-
-  assigned_type        crm_Opportunities_Type?         @relation(fields: [type], references: [id])
-  assigned_sales_stage crm_Opportunities_Sales_Stages? @relation("assinged_sales_stage", fields: [sales_stage], references: [id])
-  assigned_to_user     Users?                          @relation("assigned_to_user_relation", fields: [assigned_to], references: [id])
-  created_by_user      Users?                          @relation("created_by_user_relation", fields: [created_by], references: [id])
-  assigned_account     crm_Accounts?                   @relation(fields: [account], references: [id])
-  assigned_campaings   crm_campaigns?                  @relation(fields: [campaign], references: [id])
-  documents            DocumentsToOpportunities[]
-  contacts             ContactsToOpportunities[]
-  embedding            crm_Embeddings_Opportunities?
-
-  @@index([account])
-  @@index([assigned_to])
-  @@index([campaign])
-  @@index([contact])
-  @@index([created_by])
-  @@index([sales_stage])
-  @@index([type])
-  @@index([status])
-  @@index([createdAt])
-  @@index([close_date])
-  @@index([status, sales_stage])
-}
-
-enum crm_Opportunity_Status {
+enum DealStatus {
+  DRAFT
   ACTIVE
-  INACTIVE
-  PENDING
-  CLOSED
+  ON_HOLD
+  PASSED
+  CLOSED_WON
+  CLOSED_LOST
 }
 
-model crm_campaigns {
-  id            String              @id @default(uuid()) @db.Uuid
-  v             Int                 @map("__v")
-  name          String
-  description   String?
-  status        String?
-  opportunities crm_Opportunities[]
-}
-
-model crm_Opportunities_Sales_Stages {
-  id                                 String              @id @default(uuid()) @db.Uuid
-  v                                  Int                 @map("__v")
-  name                               String
-  probability                        BigInt?
-  order                              BigInt?
-  assigned_opportunities_sales_stage crm_Opportunities[] @relation("assinged_sales_stage")
-}
-
-model crm_Opportunities_Type {
-  id                     String              @id @default(uuid()) @db.Uuid
-  v                      Int                 @map("__v")
-  name                   String
-  order                  BigInt?
-  assigned_opportunities crm_Opportunities[]
-}
-
-model crm_Contacts {
-  id               String    @id @default(uuid()) @db.Uuid
-  v                Int       @default(0) @map("__v")
-  account          String?   @db.Uuid
-  assigned_to      String?   @db.Uuid
-  birthday         String?
-  created_by       String?   @db.Uuid
-  createdBy        String?   @db.Uuid
-  created_on       DateTime? @default(now())
-  cratedAt         DateTime? @default(now())
-  last_activity    DateTime? @default(now())
-  updatedAt        DateTime? @updatedAt
-  updatedBy        String?   @db.Uuid
-  last_activity_by String?   @db.Uuid
-  description      String?
-  email            String?
-  personal_email   String?
-  first_name       String?
-  last_name        String
-  office_phone     String?
-  mobile_phone     String?
-  website          String?
-  position         String?
-  status           Boolean   @default(true)
-  social_twitter   String?
-  social_facebook  String?
-  social_linkedin  String?
-  social_skype     String?
-  social_instagram String?
-  social_youtube   String?
-  social_tiktok    String?
-  type             String?   @default("Customer")
-  tags             String[]
-  notes            String[]
-
-  assigned_to_user  Users?                    @relation("assigned_contacts", fields: [assigned_to], references: [id])
-  crate_by_user     Users?                    @relation("created_contacts", fields: [created_by], references: [id])
-  accountsIDs       String?                   @db.Uuid
-  assigned_accounts crm_Accounts?             @relation(fields: [accountsIDs], references: [id])
-  opportunities     ContactsToOpportunities[]
-  documents         DocumentsToContacts[]
-  embedding         crm_Embeddings_Contacts?
-
-  @@index([assigned_to])
-  @@index([created_by])
-  @@index([accountsIDs])
-  @@index([createdBy])
-  @@index([updatedBy])
-  @@index([status])
-  @@index([type])
-  @@index([cratedAt])
-  @@index([last_activity])
-}
-
-enum crm_Contact_Type {
-  Customer
-  Partner
-  Vendor
-  Prospect
-}
-
-model crm_Contracts {
-  id                  String               @id @default(uuid()) @db.Uuid
-  v                   Int                  @map("__v")
-  title               String
-  value               Int
-  startDate           DateTime?            @default(now())
-  endDate             DateTime?
-  renewalReminderDate DateTime?
-  customerSignedDate  DateTime?
-  companySignedDate   DateTime?
-  description         String?
-  account             String?              @db.Uuid
-  assigned_to         String?              @db.Uuid
-  createdAt           DateTime?            @default(now())
-  createdBy           String?              @db.Uuid
-  updatedAt           DateTime?            @updatedAt
-  updatedBy           String?              @db.Uuid
-  status              crm_Contracts_Status @default(NOTSTARTED)
-  type                String?
-
-  assigned_account crm_Accounts? @relation(fields: [account], references: [id])
-  assigned_to_user Users?        @relation(fields: [assigned_to], references: [id])
-
-  @@index([account])
-  @@index([assigned_to])
-  @@index([createdBy])
-  @@index([updatedBy])
-  @@index([status])
-  @@index([startDate])
-  @@index([endDate])
-  @@index([createdAt])
-  @@index([startDate, endDate])
-}
-
-enum crm_Contracts_Status {
-  NOTSTARTED
-  INPROGRESS
-  SIGNED
-}
-
-model Boards {
-  id                String    @id @default(uuid()) @db.Uuid
-  v                 Int       @map("__v")
-  description       String
-  favourite         Boolean?
-  favouritePosition BigInt?
-  icon              String?
-  position          BigInt?
-  title             String
-  user              String    @db.Uuid
-  visibility        String?
-  sharedWith        String[]  @db.Uuid
-  createdAt         DateTime? @default(now())
-  createdBy         String?   @db.Uuid
-  updatedAt         DateTime? @updatedAt
-  updatedBy         String?   @db.Uuid
-
-  assigned_user Users?          @relation("assigned_user", fields: [user], references: [id])
-  sections      Sections[]
-  watchers      BoardWatchers[]
-
-  @@index([user])
-  @@index([createdBy])
-  @@index([updatedBy])
-  @@index([favourite])
-  @@index([visibility])
-  @@index([createdAt])
-  @@index([user, favourite])
-}
-
-model Employees {
-  id     String  @id @default(uuid()) @db.Uuid
-  v      Int     @map("__v")
-  avatar String
-  email  String?
-  name   String
-  salary BigInt
-  status String
-}
-
-model ImageUpload {
-  id String @id @default(uuid()) @db.Uuid
-}
-
-model Documents {
-  id                     String    @id @default(uuid()) @db.Uuid
-  v                      Int?      @map("__v")
-  date_created           DateTime? @default(now())
-  createdAt              DateTime? @default(now())
-  last_updated           DateTime? @updatedAt
-  updatedAt              DateTime? @updatedAt
-  document_name          String
-  created_by_user        String?   @db.Uuid
-  createdBy              String?   @db.Uuid
-  description            String?
-  document_type          String?   @db.Uuid
-  favourite              Boolean?
-  document_file_mimeType String
-  document_file_url      String
-  status                 String?
-  visibility             String?
-  tags                   Json?     @db.JsonB
-  key                    String?
-  size                   Int?
-  assigned_user          String?   @db.Uuid
-  connected_documents    String[]
-
-  created_by           Users?                        @relation("created_by_user", fields: [created_by_user], references: [id])
-  assigned_to_user     Users?                        @relation("assigned_to_user", fields: [assigned_user], references: [id])
-  documents_type       Documents_Types?              @relation(fields: [document_type], references: [id])
-  document_system_type DocumentSystemType?           @default(OTHER)
-  opportunities        DocumentsToOpportunities[]
-  contacts             DocumentsToContacts[]
-  tasks                DocumentsToTasks[]
-  crm_accounts_tasks   DocumentsToCrmAccountsTasks[]
-  leads                DocumentsToLeads[]
-  accounts             DocumentsToAccounts[]
-
-  @@index([created_by_user])
-  @@index([assigned_user])
-  @@index([document_type])
-  @@index([createdBy])
-  @@index([status])
-  @@index([visibility])
-  @@index([favourite])
-  @@index([createdAt])
-  @@index([document_system_type])
-}
-
-enum DocumentSystemType {
-  RECEIPT
-  CONTRACT
-  OFFER
+enum Sector {
+  SAAS
+  FINTECH
+  D2C
+  CONSUMER
+  AI
+  HEALTHTECH
   OTHER
 }
 
-model Documents_Types {
-  id                 String      @id @default(uuid()) @db.Uuid
-  v                  Int         @map("__v")
-  name               String
-  assigned_documents Documents[]
+enum FundingStage {
+  PRE_SEED
+  SEED
+  SERIES_A
+  OTHER
+}
+
+enum ContactType {
+  VC
+  CO_INVESTOR
+  OPERATOR
+  FOUNDER
+  ADVISOR
+}
+
+enum WarmthScore {
+  HOT
+  WARM
+  COLD
+}
+
+enum DocumentType {
+  PITCH_DECK
+  ONE_PAGER
+  DD_MATERIAL
+  PARTNER_BRIEF
+  TERM_SHEET
+  OTHER
+}
+
+enum AIOutputType {
+  DEAL_EXTRACTION
+  ONE_PAGER
+  EMAIL_DRAFT
+  PARTNER_BRIEF
+  SCREENING_SUMMARY
+}
+
+enum IngestionChannel {
+  WEB
+  EMAIL
+  WHATSAPP
+  TELEGRAM
+  MOBILE_PWA
+}
+
+enum SourceType {
+  INBOUND
+  VC_FORWARD
+  COLD_DM
+  RAZORPAY_NETWORK
+  EMAIL_FORWARD
+  OTHER
+}
+
+// ─── User (Supabase Auth — minimal local record) ──────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activities     Activity[]
+  aiOutputs      AIOutput[]
+  documents      Document[]
+  calendarEvents CalendarEvent[]   @relation("CalendarEventCreator")
+  termSheets     TermSheet[]       @relation("TermSheetCreator")
+  emailTemplates EmailTemplate[]   @relation("EmailTemplateCreator")
+  auditLogs      AuditLog[]        @relation("AuditLogUser")
+
+  @@map("users")
+}
+
+// ─── Deal Pipeline (Section 1.1) ──────────────────────
+
+model Deal {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Company info
+  companyName String
+  website     String?
+  sector      Sector?
+  fundingStage FundingStage?
+
+  // Deal info
+  chequeSize  Float?
+  source      String?
+  sourceType  SourceType?
+
+  // Pipeline state
+  stage       DealStage  @default(DEAL_SOURCE)
+  status      DealStatus @default(ACTIVE)
+
+  // SLA tracking
+  stageEnteredAt DateTime @default(now())
+  slaDueAt       DateTime?
+
+  // Screening criteria (Stage 03 gate)
+  sectorFit           Boolean?
+  stageFit            Boolean?
+  chequeFit           Boolean?
+  razorpayRelevance   Boolean?
+  founderBackground   String?
+
+  // Ingestion
+  ingestionChannel IngestionChannel @default(WEB)
+  rawIngestionText String?
+
+  // Call notes (Intro Call stage)
+  callNotes           String?
+  founderEmailConfirmed Boolean @default(false)
+
+  // Partner stages
+  onePagerApproved Boolean @default(false)
+  partnerNotified  Boolean @default(false)
+  ddChecklistStarted Boolean @default(false)
+  partnerBriefUploaded Boolean @default(false)
+  finalDecisionRecorded Boolean @default(false)
+
+  // AI extraction metadata
+  aiConfidence Float?
+
+  // Relations
+  founders       Founder[]
+  documents      Document[]
+  activities     Activity[]
+  aiOutputs      AIOutput[]
+  portfolio      PortfolioCompany?
+  calendarEvents CalendarEvent[]
+  termSheet      TermSheet?
+
+  @@index([stage])
+  @@index([status])
+  @@index([slaDueAt])
+  @@map("deals")
+}
+
+model Founder {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name     String
+  email    String?
+  phone    String?
+  linkedin String?
+  title    String?
+
+  dealId String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("founders")
+}
+
+// ─── Portfolio (Section 1.3b) ─────────────────────────
+
+model PortfolioCompany {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyName    String
+  sector         Sector?
+  website        String?
+  chequeAmount   Float?
+  dateInvested   DateTime?
+  fundingStage   FundingStage?
+
+  founderName  String?
+  founderEmail String?
+  founderPhone String?
+
+  dealId String? @unique
+  deal   Deal?   @relation(fields: [dealId], references: [id])
+
+  followOnRounds FollowOnRound[]
+  boardNotes     BoardNote[]
+  activities     Activity[]
+  documents      Document[]
+  calendarEvents CalendarEvent[]
+
+  @@map("portfolio_companies")
+}
+
+model FollowOnRound {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  roundName      String
+  amount         Float?
+  leadInvestor   String?
+  marsShotParticipated Boolean @default(false)
+  date           DateTime?
+
+  portfolioCompanyId String
+  portfolioCompany   PortfolioCompany @relation(fields: [portfolioCompanyId], references: [id], onDelete: Cascade)
+
+  @@map("follow_on_rounds")
+}
+
+model BoardNote {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  title   String
+  content String
+  date    DateTime?
+
+  portfolioCompanyId String
+  portfolioCompany   PortfolioCompany @relation(fields: [portfolioCompanyId], references: [id], onDelete: Cascade)
+
+  @@map("board_notes")
+}
+
+// ─── Ecosystem Contacts (Section 1.3c) ────────────────
+
+model Contact {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name         String
+  email        String?
+  phone        String?
+  linkedin     String?
+  organization String?
+  type         ContactType @default(VC)
+
+  warmthScore       WarmthScore @default(WARM)
+  lastInteractionAt DateTime?
+  interactionCount  Int         @default(0)
+
+  sectorExpertise String[]
+  coInvestmentHistory String?
+  dealSourceCount Int         @default(0)
+
+  activities     Activity[]
+  documents      Document[]
+  calendarEvents CalendarEvent[]
+
+  @@index([warmthScore])
+  @@index([lastInteractionAt])
+  @@map("contacts")
+}
+
+// ─── Activity Log (polymorphic) ───────────────────────
+
+model Activity {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  type        String
+  title       String
+  description String?
+  metadata    Json?
+
+  dealId             String?
+  deal               Deal?             @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  portfolioCompanyId String?
+  portfolioCompany   PortfolioCompany? @relation(fields: [portfolioCompanyId], references: [id], onDelete: Cascade)
+  contactId          String?
+  contact            Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@index([dealId])
+  @@index([portfolioCompanyId])
+  @@index([contactId])
+  @@index([createdAt])
+  @@map("activities")
+}
+
+// ─── Documents (Supabase Storage) ─────────────────────
+
+model Document {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name         String
+  type         DocumentType
+  storagePath  String
+  fileSize     Int?
+  mimeType     String?
+  version      Int           @default(1)
+
+  dealId             String?
+  deal               Deal?              @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  portfolioCompanyId String?
+  portfolioCompany   PortfolioCompany?  @relation(fields: [portfolioCompanyId], references: [id], onDelete: SetNull)
+  contactId          String?
+  contact            Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  termSheetId        String?
+  termSheet          TermSheet?         @relation(fields: [termSheetId], references: [id], onDelete: SetNull)
+  uploadedById       String?
+  uploadedBy         User?              @relation(fields: [uploadedById], references: [id])
+
+  versions DocumentVersion[]
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  versionNumber Int
+  storagePath   String
+  fileSize      Int?
+  changeNote    String?
+
+  documentId   String
+  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedById String?
+
+  @@map("document_versions")
+}
+
+// ─── AI Outputs ───────────────────────────────────────
+
+model AIOutput {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  type       AIOutputType
+  content    String
+  confidence Float?
+  approved   Boolean       @default(false)
+  approvedAt DateTime?
+
+  dealId String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  generatedById String?
+  generatedBy   User?   @relation(fields: [generatedById], references: [id])
+
+  @@index([dealId])
+  @@map("ai_outputs")
+}
+
+// ─── Calendar Events ─────────────────────────────────
+
+enum CalendarEventType {
+  INTRO_CALL
+  PARTNER_REVIEW
+  DD_MEETING
+  BOARD_MEETING
+  ECOSYSTEM_CATCHUP
+  TASK
+  OTHER
+}
+
+enum CalendarEventStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model CalendarEvent {
+  id              String              @id @default(cuid())
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  title           String
+  description     String?
+  type            CalendarEventType   @default(OTHER)
+  status          CalendarEventStatus @default(SCHEDULED)
+  startAt         DateTime
+  endAt           DateTime
+  allDay          Boolean             @default(false)
+  location        String?
+  reminderMinutes Int?                @default(30)
+  isSlaReminder   Boolean             @default(false)
+
+  dealId             String?
+  deal               Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  portfolioCompanyId String?
+  portfolioCompany   PortfolioCompany? @relation(fields: [portfolioCompanyId], references: [id], onDelete: SetNull)
+  contactId          String?
+  contact            Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  createdById        String?
+  createdBy          User?             @relation("CalendarEventCreator", fields: [createdById], references: [id])
+
+  @@index([startAt])
+  @@map("calendar_events")
+}
+
+// ─── Term Sheets ─────────────────────────────────────
+
+enum TermSheetStatus {
+  DRAFT
+  SENT
+  NEGOTIATING
+  SIGNED
+  EXPIRED
+}
+
+model TermSheet {
+  id              String          @id @default(cuid())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  valuation       Float?
+  chequeSize      Float?
+  equityPercent   Float?
+  investorRights  String?
+  boardSeat       Boolean         @default(false)
+  proRataRights   Boolean         @default(false)
+  liquidationPref String?
+  otherTerms      String?
+  status          TermSheetStatus @default(DRAFT)
+  version         Int             @default(1)
+  sentAt          DateTime?
+  signedAt        DateTime?
+  expiresAt       DateTime?
+
+  dealId      String @unique
+  deal        Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  documents   Document[]
+  revisions   TermSheetRevision[]
+  createdById String?
+  createdBy   User?  @relation("TermSheetCreator", fields: [createdById], references: [id])
+
+  @@map("term_sheets")
+}
+
+model TermSheetRevision {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  versionNumber Int
+  changes       Json
+  note          String?
+
+  termSheetId String
+  termSheet   TermSheet @relation(fields: [termSheetId], references: [id], onDelete: Cascade)
+
+  @@map("term_sheet_revisions")
+}
+
+// ─── Email Templates ─────────────────────────────────
+
+enum EmailTemplateType {
+  SCREENING_PASS
+  SCREENING_REJECT
+  INTRO_CALL_BOOKING
+  DD_KICKOFF
+  PARTNER_BRIEF
+  TERM_SHEET_SEND
+  FOLLOW_UP
+  CUSTOM
+}
+
+model EmailTemplate {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  name        String
+  type        EmailTemplateType @default(CUSTOM)
+  subject     String
+  body        String
+  isDefault   Boolean           @default(false)
+  forStage    String?
+  createdById String?
+  createdBy   User?             @relation("EmailTemplateCreator", fields: [createdById], references: [id])
+
+  @@index([type])
+  @@map("email_templates")
+}
+
+// ─── Project Boards (recovered from OpenSuite) ──────
+
+model Boards {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  v           Int      @default(0)
+  title       String
+  description String?
+  position    Int      @default(0)
+  visibility  String   @default("private")
+  user        String
+  sharedWith  String[]
+  createdBy   String
+  watchers    String[]
+  favourite   Boolean  @default(false)
+
+  /// Optional link to a PortfolioCompany (flat string ref, no Prisma relation)
+  portfolioCompanyId String?
+
+  @@map("boards")
 }
 
 model Sections {
-  id       String  @id @default(uuid()) @db.Uuid
-  v        Int     @map("__v")
-  board    String  @db.Uuid
-  title    String
-  position BigInt?
-  tasks    Tasks[]
-
-  board_relation Boards? @relation(fields: [board], references: [id])
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  v         Int      @default(0)
+  title     String
+  board     String
+  position  Int      @default(0)
 
   @@index([board])
-}
-
-model crm_Industry_Type {
-  id       String         @id @default(uuid()) @db.Uuid
-  v        Int            @map("__v")
-  name     String
-  accounts crm_Accounts[]
-}
-
-model modulStatus {
-  id        String  @id @default(uuid()) @db.Uuid
-  name      String
-  isVisible Boolean
+  @@map("sections")
 }
 
 model Tasks {
-  id           String      @id @default(uuid()) @db.Uuid
-  v            Int         @map("__v")
-  content      String?
-  createdAt    DateTime?   @default(now())
-  createdBy    String?     @db.Uuid
-  updatedAt    DateTime?   @updatedAt
-  updatedBy    String?     @db.Uuid
-  dueDateAt    DateTime?   @default(now())
-  lastEditedAt DateTime?   @default(now()) @updatedAt
-  position     BigInt
-  priority     String
-  section      String?     @db.Uuid
-  tags         Json?       @db.JsonB
-  title        String
-  likes        BigInt?     @default(0)
-  user         String?     @db.Uuid
-  taskStatus   taskStatus? @default(ACTIVE)
-
-  comments         tasksComments[]
-  assigned_user    Users?             @relation(fields: [user], references: [id])
-  assigned_section Sections?          @relation(fields: [section], references: [id])
-  documents        DocumentsToTasks[]
-
-  @@index([user])
-  @@index([section])
-  @@index([createdBy])
-  @@index([updatedBy])
-  @@index([priority])
-  @@index([taskStatus])
-  @@index([dueDateAt])
-  @@index([createdAt])
-  @@index([user, taskStatus])
-}
-
-model crm_Accounts_Tasks {
-  id         String      @id @default(uuid()) @db.Uuid
-  v          Int         @map("__v")
-  content    String?
-  createdAt  DateTime?   @default(now())
-  createdBy  String?     @db.Uuid
-  updatedAt  DateTime?   @updatedAt
-  updatedBy  String?     @db.Uuid
-  dueDateAt  DateTime?   @default(now())
-  priority   String
-  tags       Json?       @db.JsonB
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  v          Int       @default(0)
   title      String
-  likes      BigInt?     @default(0)
-  user       String?     @db.Uuid
-  taskStatus taskStatus? @default(ACTIVE)
+  content    String?
+  dueDateAt  DateTime?
+  priority   String    @default("MEDIUM")
+  taskStatus String    @default("ACTIVE")
+  section    String
+  position   Int       @default(0)
+  user       String
+  createdBy  String
+  updatedBy  String
+  likes      String[]
+  tags       String[]
 
-  comments      tasksComments[]
-  assigned_user Users?          @relation(fields: [user], references: [id])
-
-  //CRM assigments
-  account      String?                       @db.Uuid
-  crm_accounts crm_Accounts?                 @relation(fields: [account], references: [id])
-  documents    DocumentsToCrmAccountsTasks[]
-
+  @@index([section])
   @@index([user])
-  @@index([account])
-  @@index([createdBy])
-  @@index([updatedBy])
-  @@index([priority])
-  @@index([taskStatus])
-  @@index([dueDateAt])
-  @@index([createdAt])
-  @@index([account, taskStatus])
+  @@map("tasks")
 }
 
-model tasksComments {
-  id                        String   @id @default(uuid()) @db.Uuid
-  v                         Int      @map("__v")
-  comment                   String
-  createdAt                 DateTime @default(now())
-  task                      String   @db.Uuid
-  user                      String   @db.Uuid
-  assigned_crm_account_task String?  @db.Uuid
-
-  assigned_crm_account_task_task crm_Accounts_Tasks? @relation(fields: [assigned_crm_account_task], references: [id])
-  assigned_task                  Tasks?              @relation(fields: [task], references: [id], onDelete: Cascade)
-  assigned_user                  Users?              @relation(fields: [user], references: [id])
+model TasksComments {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  v         Int      @default(0)
+  comment   String
+  task      String
+  user      String
 
   @@index([task])
-  @@index([user])
-  @@index([assigned_crm_account_task])
-}
-
-enum taskStatus {
-  ACTIVE
-  PENDING
-  COMPLETE
-}
-
-model TodoList {
-  id          String @id @default(uuid()) @db.Uuid
-  createdAt   String
-  description String
-  title       String
-  url         String
-  user        String
-}
-
-enum ActiveStatus {
-  ACTIVE
-  INACTIVE
-  PENDING
-}
-
-model Users {
-  id               String       @id @default(uuid()) @db.Uuid
-  v                Int          @default(0) @map("__v")
-  account_name     String?
-  avatar           String?
-  email            String       @unique
-  is_account_admin Boolean      @default(false)
-  is_admin         Boolean      @default(false)
-  created_on       DateTime     @default(now())
-  lastLoginAt      DateTime?
-  name             String?
-  password         String?
-  username         String?
-  userStatus       ActiveStatus @default(PENDING)
-  userLanguage     Language     @default(en)
-
-  tasksComment         tasksComments[]
-  created_by_documents Documents[]           @relation("created_by_user")
-  assigned_documents   Documents[]           @relation("assigned_to_user")
-  tasks                Tasks[]
-  crm_accounts_tasks   crm_Accounts_Tasks[]
-  accounts             crm_Accounts[]        @relation("AccountAssignedTo")
-  leads                crm_Leads[]           @relation("LeadAssignedTo")
-  created_by_user      crm_Opportunities[]   @relation("created_by_user_relation")
-  assigned_opportunity crm_Opportunities[]   @relation("assigned_to_user_relation")
-  assigned_contacts    crm_Contacts[]        @relation("assigned_contacts")
-  crated_contacts      crm_Contacts[]        @relation("created_contacts")
-  openAi_key           openAi_keys[]
-  assigned_contracts   crm_Contracts[]
-  boards               Boards[]              @relation("assigned_user")
-  watching_boards      BoardWatchers[]
-  watching_accounts    AccountWatchers[]
-  created_targets      crm_Targets[]         @relation("created_targets")
-  created_target_lists crm_TargetLists[]     @relation("created_target_lists")
-  apiTokens            ApiToken[]
-
-  @@index([email])
-  @@index([userStatus])
-  @@index([userLanguage])
-  @@index([is_admin])
-  @@index([is_account_admin])
-  @@index([created_on])
-  @@index([lastLoginAt])
-}
-
-enum Language {
-  cz
-  en
-  de
-  uk
-}
-
-model system_Modules_Enabled {
-  id       String  @id @default(uuid()) @db.Uuid
-  v        Int     @map("__v")
-  name     String
-  enabled  Boolean
-  position Int
-}
-
-model openAi_keys {
-  id              String @id @default(uuid()) @db.Uuid
-  v               Int    @map("__v")
-  user            String @db.Uuid
-  organization_id String
-  api_key         String
-  assigned_user   Users? @relation(fields: [user], references: [id])
-
-  @@index([user])
-}
-
-model systemServices {
-  id              String  @id @default(uuid()) @db.Uuid
-  v               Int     @map("__v")
-  name            String
-  serviceUrl      String?
-  serviceId       String?
-  serviceKey      String?
-  servicePassword String?
-  servicePort     String?
-  description     String?
-}
-
-model gpt_models {
-  id          String     @id @default(uuid()) @db.Uuid
-  v           Int        @map("__v")
-  model       String
-  description String?
-  status      gptStatus?
-  created_on  DateTime?  @default(now())
-}
-
-enum gptStatus {
-  ACTIVE
-  INACTIVE
-}
-
-// ============================================
-// JUNCTION TABLES FOR MANY-TO-MANY RELATIONSHIPS
-// ============================================
-
-// Documents junction tables (6 tables)
-model DocumentsToOpportunities {
-  document_id    String @db.Uuid
-  opportunity_id String @db.Uuid
-
-  document    Documents         @relation(fields: [document_id], references: [id], onDelete: Cascade)
-  opportunity crm_Opportunities @relation(fields: [opportunity_id], references: [id], onDelete: Cascade)
-
-  @@id([document_id, opportunity_id])
-  @@index([document_id])
-  @@index([opportunity_id])
-}
-
-model DocumentsToContacts {
-  document_id String @db.Uuid
-  contact_id  String @db.Uuid
-
-  document Documents    @relation(fields: [document_id], references: [id], onDelete: Cascade)
-  contact  crm_Contacts @relation(fields: [contact_id], references: [id], onDelete: Cascade)
-
-  @@id([document_id, contact_id])
-  @@index([document_id])
-  @@index([contact_id])
+  @@map("tasks_comments")
 }
 
 model DocumentsToTasks {
-  document_id String @db.Uuid
-  task_id     String @db.Uuid
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  documentId String
+  taskId     String
 
-  document Documents @relation(fields: [document_id], references: [id], onDelete: Cascade)
-  task     Tasks     @relation(fields: [task_id], references: [id], onDelete: Cascade)
-
-  @@id([document_id, task_id])
-  @@index([document_id])
-  @@index([task_id])
+  @@unique([documentId, taskId])
+  @@map("documents_to_tasks")
 }
 
-model DocumentsToCrmAccountsTasks {
-  document_id          String @db.Uuid
-  crm_accounts_task_id String @db.Uuid
+// ─── Audit Log ───────────────────────────────────────
 
-  document          Documents          @relation(fields: [document_id], references: [id], onDelete: Cascade)
-  crm_accounts_task crm_Accounts_Tasks @relation(fields: [crm_accounts_task_id], references: [id], onDelete: Cascade)
+model AuditLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  entity    String
+  entityId  String
+  action    String
+  changes   Json?
+  userId    String?
+  user      User?    @relation("AuditLogUser", fields: [userId], references: [id])
 
-  @@id([document_id, crm_accounts_task_id])
-  @@index([document_id])
-  @@index([crm_accounts_task_id])
-}
-
-model DocumentsToLeads {
-  document_id String @db.Uuid
-  lead_id     String @db.Uuid
-
-  document Documents @relation(fields: [document_id], references: [id], onDelete: Cascade)
-  lead     crm_Leads @relation(fields: [lead_id], references: [id], onDelete: Cascade)
-
-  @@id([document_id, lead_id])
-  @@index([document_id])
-  @@index([lead_id])
-}
-
-model DocumentsToAccounts {
-  document_id String @db.Uuid
-  account_id  String @db.Uuid
-
-  document Documents    @relation(fields: [document_id], references: [id], onDelete: Cascade)
-  account  crm_Accounts @relation(fields: [account_id], references: [id], onDelete: Cascade)
-
-  @@id([document_id, account_id])
-  @@index([document_id])
-  @@index([account_id])
-}
-
-// Watchers junction tables (2 tables)
-model AccountWatchers {
-  account_id String @db.Uuid
-  user_id    String @db.Uuid
-
-  account crm_Accounts @relation(fields: [account_id], references: [id], onDelete: Cascade)
-  user    Users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@id([account_id, user_id])
-  @@index([account_id])
-  @@index([user_id])
-}
-
-model BoardWatchers {
-  board_id String @db.Uuid
-  user_id  String @db.Uuid
-
-  board Boards @relation(fields: [board_id], references: [id], onDelete: Cascade)
-  user  Users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@id([board_id, user_id])
-  @@index([board_id])
-  @@index([user_id])
-}
-
-// Contacts to Opportunities junction table
-model ContactsToOpportunities {
-  contact_id     String @db.Uuid
-  opportunity_id String @db.Uuid
-
-  contact     crm_Contacts      @relation(fields: [contact_id], references: [id], onDelete: Cascade)
-  opportunity crm_Opportunities @relation(fields: [opportunity_id], references: [id], onDelete: Cascade)
-
-  @@id([contact_id, opportunity_id])
-  @@index([contact_id])
-  @@index([opportunity_id])
-}
-
-// ============================================
-// CRM TARGETS FEATURE
-// ============================================
-
-model crm_Targets {
-  id               String    @id @default(uuid()) @db.Uuid
-  first_name       String?
-  last_name        String
-  email            String?
-  mobile_phone     String?
-  office_phone     String?
-  company          String?
-  company_website  String?
-  personal_website String?
-  position         String?
-  social_x         String?
-  social_linkedin  String?
-  social_instagram String?
-  social_facebook  String?
-  status           Boolean   @default(true)
-  tags             String[]
-  notes            String[]
-  created_by       String?   @db.Uuid
-  created_on       DateTime? @default(now())
-  updatedAt        DateTime? @updatedAt
-  updatedBy        String?   @db.Uuid
-
-  crate_by_user Users?               @relation("created_targets", fields: [created_by], references: [id])
-  target_lists  TargetsToTargetLists[]
-
-  @@index([created_by])
-  @@index([status])
-  @@index([created_on])
-}
-
-model crm_TargetLists {
-  id          String    @id @default(uuid()) @db.Uuid
-  name        String
-  description String?
-  status      Boolean   @default(true)
-  created_by  String?   @db.Uuid
-  created_on  DateTime? @default(now())
-  updatedAt   DateTime? @updatedAt
-
-  crate_by_user Users?               @relation("created_target_lists", fields: [created_by], references: [id])
-  targets       TargetsToTargetLists[]
-
-  @@index([created_by])
-  @@index([status])
-}
-
-model TargetsToTargetLists {
-  target_id      String @db.Uuid
-  target_list_id String @db.Uuid
-
-  target      crm_Targets     @relation(fields: [target_id], references: [id], onDelete: Cascade)
-  target_list crm_TargetLists @relation(fields: [target_list_id], references: [id], onDelete: Cascade)
-
-  @@id([target_id, target_list_id])
-  @@index([target_id])
-  @@index([target_list_id])
-}
-
-// ============================================
-// PGVECTOR EMBEDDING COMPANION MODELS
-// ============================================
-
-model crm_Embeddings_Accounts {
-  id           String   @id @default(uuid()) @db.Uuid
-  account_id   String   @unique @db.Uuid
-  embedding    Unsupported("vector(1536)")
-  content_hash String
-  /// Must be set explicitly on upsert — @default(now()) only fires on INSERT
-  embedded_at  DateTime @default(now())
-  account      crm_Accounts @relation(fields: [account_id], references: [id], onDelete: Cascade)
-
-  @@map("crm_Embeddings_Accounts")
-}
-
-model crm_Embeddings_Contacts {
-  id           String   @id @default(uuid()) @db.Uuid
-  contact_id   String   @unique @db.Uuid
-  embedding    Unsupported("vector(1536)")
-  content_hash String
-  /// Must be set explicitly on upsert — @default(now()) only fires on INSERT
-  embedded_at  DateTime @default(now())
-  contact      crm_Contacts @relation(fields: [contact_id], references: [id], onDelete: Cascade)
-
-  @@map("crm_Embeddings_Contacts")
-}
-
-model crm_Embeddings_Leads {
-  id           String   @id @default(uuid()) @db.Uuid
-  lead_id      String   @unique @db.Uuid
-  embedding    Unsupported("vector(1536)")
-  content_hash String
-  /// Must be set explicitly on upsert — @default(now()) only fires on INSERT
-  embedded_at  DateTime @default(now())
-  lead         crm_Leads @relation(fields: [lead_id], references: [id], onDelete: Cascade)
-
-  @@map("crm_Embeddings_Leads")
-}
-
-model crm_Embeddings_Opportunities {
-  id             String   @id @default(uuid()) @db.Uuid
-  opportunity_id String   @unique @db.Uuid
-  embedding      Unsupported("vector(1536)")
-  content_hash   String
-  /// Must be set explicitly on upsert — @default(now()) only fires on INSERT
-  embedded_at    DateTime @default(now())
-  opportunity    crm_Opportunities @relation(fields: [opportunity_id], references: [id], onDelete: Cascade)
-
-  @@map("crm_Embeddings_Opportunities")
-}
-
-// ============================================
-// API TOKENS
-// ============================================
-
-model ApiToken {
-  id          String    @id @default(uuid()) @db.Uuid
-  name        String
-  tokenHash   String    @unique
-  tokenPrefix String    @db.VarChar(8)
-  userId      String    @db.Uuid
-  user        Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt   DateTime?
-  revokedAt   DateTime?
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
-
-  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

@@ -1,21 +1,52 @@
 "use client";
 
-import { Card, Title, AreaChart } from "@tremor/react";
+import {
+  AreaChart as RechartsArea,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-const dataFormatter = (number: number) => {
-  return Intl.NumberFormat("us").format(number).toString();
-};
+export function AreaChartComponent({
+  chartData,
+  title,
+}: {
+  chartData: any[];
+  title: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <RechartsArea data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="hsl(var(--primary))"
+              fill="hsl(var(--primary) / 0.2)"
+            />
+          </RechartsArea>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
 
-export const AreaChartDemo = ({ chartData, title }: any) => (
-  <Card>
-    <Title>{title}</Title>
-    <AreaChart
-      className="h-72 mt-4"
-      data={chartData}
-      index="date"
-      categories={["Number"]}
-      colors={["orange"]}
-      valueFormatter={dataFormatter}
-    />
-  </Card>
-);
+// Keep the old export name for backward compatibility
+export const AreaChartDemo = AreaChartComponent;

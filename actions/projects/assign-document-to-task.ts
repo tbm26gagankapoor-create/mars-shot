@@ -1,6 +1,4 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -8,8 +6,8 @@ export const assignDocumentToTask = async (data: {
   documentId: string;
   taskId: string;
 }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { documentId, taskId } = data;
   if (!documentId) return { error: "Missing document ID" };
@@ -24,14 +22,14 @@ export const assignDocumentToTask = async (data: {
 
     await prismadb.documentsToTasks.create({
       data: {
-        document_id: documentId,
-        task_id: taskId,
+        documentId,
+        taskId,
       },
     });
 
     await prismadb.tasks.update({
       where: { id: taskId },
-      data: { updatedBy: session.user.id },
+      data: { updatedBy: userId },
     });
 
     revalidatePath("/[locale]/(routes)/projects", "page");
@@ -46,8 +44,8 @@ export const disconnectDocumentFromTask = async (data: {
   documentId: string;
   taskId: string;
 }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { documentId, taskId } = data;
   if (!documentId) return { error: "Missing document ID" };
@@ -62,16 +60,16 @@ export const disconnectDocumentFromTask = async (data: {
 
     await prismadb.documentsToTasks.delete({
       where: {
-        document_id_task_id: {
-          document_id: documentId,
-          task_id: taskId,
+        documentId_taskId: {
+          documentId,
+          taskId,
         },
       },
     });
 
     const updatedTask = await prismadb.tasks.update({
       where: { id: taskId },
-      data: { updatedBy: session.user.id },
+      data: { updatedBy: userId },
     });
 
     revalidatePath("/[locale]/(routes)/projects", "page");

@@ -1,6 +1,4 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -8,8 +6,8 @@ export const createSection = async (data: {
   boardId: string;
   title: string;
 }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { boardId, title } = data;
   if (!title) return { error: "Missing section title" };

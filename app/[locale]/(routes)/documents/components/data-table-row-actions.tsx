@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { labels } from "../data/data";
-import { taskSchema } from "../data/schema";
+import { documentSchema } from "../data/schema";
 import { useRouter } from "next/navigation";
 import DocumentViewModal from "@/components/modals/document-view-modal";
 import { useState } from "react";
@@ -35,7 +35,7 @@ export function DataTableRowActions<TData>({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const document = taskSchema.parse(row.original);
+  const document = documentSchema.parse(row.original);
 
   //Action triggered when the delete button is clicked to delete the store
   const onDelete = async () => {

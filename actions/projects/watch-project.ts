@@ -1,23 +1,28 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { junctionTableHelpers } from "@/lib/junction-helpers";
 import { revalidatePath } from "next/cache";
 
 export const watchProject = async (projectId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   if (!projectId) return { error: "Missing project ID" };
 
   try {
-    await prismadb.boards.update({
+    const board = await prismadb.boards.findUnique({
       where: { id: projectId },
-      data: {
-        watchers: junctionTableHelpers.addWatcher(session.user.id),
-      },
     });
+
+    if (!board) return { error: "Project not found" };
+
+    if (!board.watchers.includes(userId)) {
+      await prismadb.boards.update({
+        where: { id: projectId },
+        data: {
+          watchers: [...board.watchers, userId],
+        },
+      });
+    }
 
     revalidatePath("/[locale]/(routes)/projects", "page");
     return { success: true };
@@ -28,19 +33,22 @@ export const watchProject = async (projectId: string) => {
 };
 
 export const unwatchProject = async (projectId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   if (!projectId) return { error: "Missing project ID" };
 
   try {
+    const board = await prismadb.boards.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!board) return { error: "Project not found" };
+
     await prismadb.boards.update({
       where: { id: projectId },
       data: {
-        watchers: junctionTableHelpers.removeBoardWatcher(
-          projectId,
-          session.user.id
-        ),
+        watchers: board.watchers.filter((w) => w !== userId),
       },
     });
 

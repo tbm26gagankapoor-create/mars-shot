@@ -1,7 +1,7 @@
 "use client";
 
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 
 export const ToastProvider = () => {
-  return <Toaster />;
+  return <Toaster richColors position="top-right" />;
 };

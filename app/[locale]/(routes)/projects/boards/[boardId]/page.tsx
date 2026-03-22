@@ -10,8 +10,6 @@ import DeleteProjectDialog from "./dialogs/DeleteProject";
 import { getKanbanData } from "@/actions/projects/get-kanban-data";
 import Kanban from "./components/Kanban";
 import { getBoards } from "@/actions/projects/get-boards";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { Lock } from "lucide-react";
 
 interface BoardDetailProps {
@@ -22,15 +20,15 @@ export const maxDuration = 300;
 
 const BoardPage = async (props: BoardDetailProps) => {
   const params = await props.params;
-  const session = await getServerSession(authOptions);
-  const user = session?.user;
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
+
   const { boardId } = params;
   const board: any = await getBoard(boardId);
-  const boards = await getBoards(user?.id!);
+  const boards = await getBoards(userId);
   const sections: any = await getBoardSections(boardId);
   const kanbanData = await getKanbanData(boardId);
 
-  //console.log(board, "board");
   return (
     <Container
       title={board?.board?.title}

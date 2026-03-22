@@ -1,6 +1,6 @@
 import { getTask } from "@/actions/projects/get-task";
 import React from "react";
-import moment from "moment";
+import { format } from "date-fns";
 
 import { getDocuments } from "@/actions/documents/get-documents";
 import { getTaskComments } from "@/actions/projects/get-task-comments";
@@ -26,8 +26,6 @@ import {
 import { Calendar, Shield, User } from "lucide-react";
 import { prismadb } from "@/lib/prisma";
 import { getBoards } from "@/actions/projects/get-boards";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 type TaskPageProps = {
   params: Promise<{
@@ -37,8 +35,8 @@ type TaskPageProps = {
 
 const TaskPage = async (props: TaskPageProps) => {
   const params = await props.params;
-  const session = await getServerSession(authOptions);
-  const user = session?.user;
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { taskId } = params;
   const task: any = await getTask(taskId);
@@ -46,24 +44,19 @@ const TaskPage = async (props: TaskPageProps) => {
     getTaskDocuments(taskId),
     getDocuments(),
     getTaskComments(taskId),
-    getBoards(user?.id!),
+    getBoards(userId),
   ]);
   const creatorUser = task?.createdBy
-    ? await prismadb.users.findFirst({
+    ? await prismadb.user.findFirst({
         where: { id: task.createdBy },
         select: { name: true },
       })
     : null;
 
-  //console.log(taskDocuments, "taskDocuments");
-
   return (
     <div className="flex flex-col md:flex-row w-full px-2 space-x-2 ">
       <div className="flex flex-col w-full md:w-2/3">
         <div className="w-full border rounded-lg mb-5">
-          {/*           <pre>
-            <code>{JSON.stringify(task, null, 2)}</code>
-          </pre> */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle>{task.title}</CardTitle>
@@ -78,7 +71,7 @@ const TaskPage = async (props: TaskPageProps) => {
                       Date created
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {moment(task.createdAt).format("YYYY-MM-DD HH:mm:ss")}
+                      {format(new Date(task.createdAt), "yyyy-MM-dd HH:mm:ss")}
                     </p>
                   </div>
                 </div>
@@ -87,7 +80,7 @@ const TaskPage = async (props: TaskPageProps) => {
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">Date due</p>
                     <p className="text-sm text-muted-foreground">
-                      {moment(task.dueDateAt).format("YYYY-MM-DD HH:mm")}
+                      {format(new Date(task.dueDateAt), "yyyy-MM-dd HH:mm")}
                     </p>
                   </div>
                 </div>
@@ -98,7 +91,7 @@ const TaskPage = async (props: TaskPageProps) => {
                       Last modified
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {moment(task.lastEditedAt).format("YYYY-MM-DD HH:mm:ss")}
+                      {format(new Date(task.updatedAt), "yyyy-MM-dd HH:mm:ss")}
                     </p>
                   </div>
                 </div>
@@ -137,7 +130,7 @@ const TaskPage = async (props: TaskPageProps) => {
                       Assigned to
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {task.assigned_user?.name || "Not assigned"}
+                      {task.user || "Not assigned"}
                     </p>
                   </div>
                 </div>
@@ -163,9 +156,6 @@ const TaskPage = async (props: TaskPageProps) => {
             </CardFooter>
           </Card>
         </div>
-        {/*         <pre>
-          <code>{JSON.stringify(taskDocuments, null, 2)}</code>
-        </pre> */}
         <h4 className="scroll-m-20 text-xl font-semibold tracking-tight py-5">
           Task documents ({taskDocuments.length})
         </h4>

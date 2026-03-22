@@ -1,10 +1,6 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import NewTaskFromProject from "@/emails/NewTaskFromProject";
-import resendHelper from "@/lib/resend";
 
 export const createTaskInBoard = async (data: {
   boardId: string;
@@ -15,8 +11,8 @@ export const createTaskInBoard = async (data: {
   user?: string;
   dueDateAt?: Date;
 }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { boardId, section, title, priority, content, user, dueDateAt } = data;
 
@@ -36,10 +32,10 @@ export const createTaskInBoard = async (data: {
           title: "New task",
           content: "",
           section,
-          createdBy: session.user.id,
-          updatedBy: session.user.id,
+          createdBy: userId,
+          updatedBy: userId,
           position: tasksCount > 0 ? tasksCount : 0,
-          user: session.user.id,
+          user: userId,
           taskStatus: "ACTIVE",
         },
       });
@@ -84,53 +80,7 @@ export const createTaskInBoard = async (data: {
       data: { updatedAt: new Date() },
     });
 
-    // Send email notification if assigning to a different user
-    if (user !== session.user.id) {
-      try {
-        let resend;
-        try {
-          resend = await resendHelper();
-        } catch {
-          // Email not configured, skip silently
-          resend = null;
-        }
-
-        if (resend) {
-          const notifyRecipient = await prismadb.users.findUnique({
-            where: { id: user },
-          });
-
-          const boardData = await prismadb.boards.findUnique({
-            where: { id: boardId },
-          });
-
-          if (notifyRecipient?.email) {
-            await resend.emails.send({
-              from:
-                process.env.NEXT_PUBLIC_APP_NAME +
-                " <" +
-                process.env.EMAIL_FROM +
-                ">",
-              to: notifyRecipient.email,
-              subject:
-                session.user.userLanguage === "en"
-                  ? `New task - ${title}.`
-                  : `Nový úkol - ${title}.`,
-              text: "",
-              react: NewTaskFromProject({
-                taskFromUser: session.user.name!,
-                username: notifyRecipient.name!,
-                userLanguage: notifyRecipient.userLanguage!,
-                taskData: task,
-                boardData,
-              }),
-            });
-          }
-        }
-      } catch (emailError) {
-        console.log("[CREATE_TASK_IN_BOARD_EMAIL]", emailError);
-      }
-    }
+    // Email notifications removed for prototype
 
     revalidatePath("/[locale]/(routes)/projects", "page");
     return { success: true };

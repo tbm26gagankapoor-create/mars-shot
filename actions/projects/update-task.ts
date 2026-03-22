@@ -1,10 +1,6 @@
 "use server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import UpdatedTaskFromProject from "@/emails/UpdatedTaskFromProject";
-import resendHelper from "@/lib/resend";
 
 export const updateTask = async (data: {
   taskId: string;
@@ -16,8 +12,8 @@ export const updateTask = async (data: {
   content: string;
   dueDateAt?: Date;
 }) => {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "Unauthorized" };
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const { taskId, title, user, boardId, priority, content, dueDateAt } = data;
   const resolvedBoardId = boardId || data.board;
@@ -47,52 +43,7 @@ export const updateTask = async (data: {
       });
     }
 
-    // Send email notification if assigning to a different user
-    if (user !== session.user.id && resolvedBoardId) {
-      try {
-        let resend;
-        try {
-          resend = await resendHelper();
-        } catch {
-          resend = null;
-        }
-
-        if (resend) {
-          const notifyRecipient = await prismadb.users.findUnique({
-            where: { id: user },
-          });
-
-          const boardData = await prismadb.boards.findUnique({
-            where: { id: resolvedBoardId },
-          });
-
-          if (notifyRecipient?.email) {
-            await resend.emails.send({
-              from:
-                process.env.NEXT_PUBLIC_APP_NAME +
-                " <" +
-                process.env.EMAIL_FROM +
-                ">",
-              to: notifyRecipient.email,
-              subject:
-                session.user.userLanguage === "en"
-                  ? `Task - ${title} - was updated.`
-                  : `Úkol - ${title} - byl aktualizován.`,
-              text: "",
-              react: UpdatedTaskFromProject({
-                taskFromUser: session.user.name!,
-                username: notifyRecipient.name!,
-                userLanguage: notifyRecipient.userLanguage!,
-                taskData: task,
-                boardData,
-              }),
-            });
-          }
-        }
-      } catch (emailError) {
-        console.log("[UPDATE_TASK_EMAIL]", emailError);
-      }
-    }
+    // Email notifications removed for prototype
 
     revalidatePath("/[locale]/(routes)/projects", "page");
     return { success: true };

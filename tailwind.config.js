@@ -17,7 +17,16 @@ module.exports = {
   		}
   	},
   	extend: {
+  		fontFamily: {
+  			sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+  			display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+  		},
   		colors: {
+  			health: {
+  				green: 'hsl(var(--health-green))',
+  				amber: 'hsl(var(--health-amber))',
+  				red: 'hsl(var(--health-red))',
+  			},
   			tremor: {
   				brand: {
   					faint: '#eff6ff',
@@ -179,7 +188,9 @@ module.exports = {
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'fade-in': 'fade-in 0.25s ease-out',
+  			'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite'
   		}
   	}
   },

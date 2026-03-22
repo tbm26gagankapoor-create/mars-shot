@@ -1,58 +1,42 @@
-import Link from "next/link";
-import { GithubIcon, Star } from "lucide-react";
-import { getTranslations } from "next-intl/server";
-
 import "@/app/[locale]/globals.css";
+import Image from "next/image";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import Footer from "@/app/[locale]/(routes)/components/Footer";
-import getGithubRepoStars from "@/actions/github/get-repo-stars";
-import { DiscordLogoIcon } from "@radix-ui/react-icons";
-
-type Props = {
-  params: Promise<{ locale: string }>;
-};
-
-export async function generateMetadata(props: Props) {
-  const params = await props.params;
-  const { locale } = params;
-
-  const t = await getTranslations({ locale, namespace: "RootLayout" });
-
-  return {
-    title: t("title"),
-    description: t("description"),
-  };
-}
-
-const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
-  //Get github stars from github api
-  const githubStars = await getGithubRepoStars();
-
+const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen w-full">
-      <div className="flex justify-end items-center space-x-5 w-full p-5">
-        <Link
-          href={process.env.NEXT_PUBLIC_GITHUB_REPO_URL || "#"}
-          className=" border rounded-md p-2"
-        >
-          <GithubIcon className="size-5" />
-        </Link>
-        <div className="flex items-center border rounded-md p-2 ">
-          <span className="sr-only">Github stars</span>
-          {githubStars}
-          <Star className="size-4" />
+    <div className="relative flex flex-col justify-center items-center min-h-screen w-full">
+      {/* Space background */}
+      <Image
+        src="/images/space-bg.jpg"
+        alt=""
+        fill
+        className="object-cover"
+        priority
+        quality={90}
+      />
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col justify-center items-center min-h-screen w-full">
+        <div className="flex justify-end items-center w-full p-5">
+          <ThemeToggle />
         </div>
-        <div className="flex items-center border rounded-md p-2">
-          <Link href="https://discord.gg/Dd4Aj6S4Dz">
-            <DiscordLogoIcon className="size-5" />
-          </Link>
+        <div className="flex flex-col items-center grow h-full overflow-hidden justify-center">
+          <div className="flex flex-col items-center gap-3 mb-10">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/25 flex items-center justify-center">
+              <span className="text-2xl font-bold text-white leading-none tracking-tight">M</span>
+            </div>
+            <div className="text-center">
+              <h1 className="font-display text-xl font-semibold tracking-tight text-white">Mars Shot</h1>
+              <p className="text-[10px] text-white/70 tracking-widest uppercase">Venture Capital</p>
+            </div>
+          </div>
+          {children}
         </div>
-        <ThemeToggle />
+        <footer className="flex h-8 justify-center items-center w-full text-[11px] text-white/40 p-5">
+          Mars Shot VC
+        </footer>
       </div>
-      <div className="flex items-center grow h-full overflow-hidden">
-        {children}
-      </div>
-      <Footer />
     </div>
   );
 };

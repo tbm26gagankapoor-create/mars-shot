@@ -1,35 +1,27 @@
 import { getDocuments } from "@/actions/documents/get-documents";
-import Container from "../components/ui/Container";
 import { DocumentsDataTable } from "./components/data-table";
 import { columns } from "./components/columns";
 import ModalDropzone from "./components/modal-dropzone";
-import { Documents } from "@prisma/client";
-import { getTranslations } from "next-intl/server";
 
 const DocumentsPage = async () => {
-  const documents: Documents[] = await getDocuments();
-  const t = await getTranslations("DocumentsPage");
+  const documents = await getDocuments();
 
   if (!documents) {
     return <div>Something went wrong</div>;
   }
 
   return (
-    <Container
-      title={t("title")}
-      description={t("description")}
-    >
-      <div className="flex space-x-5 py-5">
-        <ModalDropzone buttonLabel={t("uploadPdf")} fileType="pdfUploader" />
-        <ModalDropzone buttonLabel={t("uploadImages")} fileType="imageUploader" />
-        <ModalDropzone
-          buttonLabel={t("uploadOther")}
-          fileType="docUploader"
-        />
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between py-5">
+        <h2 className="font-display text-2xl font-semibold tracking-tight">Documents</h2>
+        <div className="flex space-x-3">
+          <ModalDropzone buttonLabel="Upload PDF" fileType="pdfUploader" />
+          <ModalDropzone buttonLabel="Upload Image" fileType="imageUploader" />
+          <ModalDropzone buttonLabel="Upload Other" fileType="docUploader" />
+        </div>
       </div>
-
       <DocumentsDataTable data={documents} columns={columns} />
-    </Container>
+    </div>
   );
 };
 

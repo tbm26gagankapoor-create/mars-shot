@@ -1,6 +1,6 @@
 import "./globals.css";
 
-import { Inter } from "next/font/google";
+import { Inter, DM_Sans } from "next/font/google";
 
 import { ReactNode } from "react";
 
@@ -11,12 +11,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-display", weight: ["400", "500", "600", "700"] });
 
 type Props = {
   children: ReactNode;
   params: Promise<{ locale: string }>;
 };
+
+export function generateViewport() {
+  return {
+    themeColor: "#18181b",
+  };
+}
 
 export async function generateMetadata(props: Props) {
   const params = await props.params;
@@ -26,9 +33,10 @@ export async function generateMetadata(props: Props) {
   const t = await getTranslations({ locale, namespace: "RootLayout" });
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL!),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
     title: t("title"),
     description: t("description"),
+    manifest: "/manifest.json",
     openGraph: {
       images: [
         {
@@ -60,7 +68,7 @@ export default async function RootLayout(props: Props) {
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={inter.className + " min-h-screen"}>
+      <body className={`${inter.variable} ${dmSans.variable} font-sans min-h-screen`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}

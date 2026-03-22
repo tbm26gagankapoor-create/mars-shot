@@ -1,19 +1,9 @@
 import { prismadb } from "@/lib/prisma";
-import { junctionTableHelpers, extractWatcherUsers } from "@/lib/junction-helpers";
 
 export const getBoard = async (id: string) => {
   const board = await prismadb.boards.findFirst({
     where: {
       id: id,
-    },
-    include: {
-      assigned_user: {
-        select: {
-          name: true,
-        },
-      },
-      // Include watchers through BoardWatchers junction table
-      ...junctionTableHelpers.includeWatchersWithUsers(),
     },
   });
 
@@ -24,18 +14,34 @@ export const getBoard = async (id: string) => {
     orderBy: {
       position: "asc",
     },
-    include: {
-      tasks: {
-        orderBy: {
-          position: "desc",
-        },
-      },
+  });
+
+  // Fetch tasks for all sections in one query and group by section
+  const sectionIds = sections.map((s) => s.id);
+  const allTasks = await prismadb.tasks.findMany({
+    where: {
+      section: { in: sectionIds },
+    },
+    orderBy: {
+      position: "desc",
     },
   });
 
+  const tasksBySection = new Map<string, typeof allTasks>();
+  for (const task of allTasks) {
+    const existing = tasksBySection.get(task.section) ?? [];
+    existing.push(task);
+    tasksBySection.set(task.section, existing);
+  }
+
+  const sectionsWithTasks = sections.map((section) => ({
+    ...section,
+    tasks: tasksBySection.get(section.id) ?? [],
+  }));
+
   const data = {
     board,
-    sections,
+    sections: sectionsWithTasks,
   };
   return data;
 };

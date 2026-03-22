@@ -1,10 +1,8 @@
-import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
 
 export const getTasks = async () => {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  // Demo: no auth check in prototype
+  const userId = "demo-user";
 
   const boards = await prismadb.boards.findMany({
     where: {
@@ -17,20 +15,12 @@ export const getTasks = async () => {
         },
       ],
     },
-    include: {
-      assigned_user: {
-        select: {
-          name: true,
-        },
-      },
-    },
     orderBy: {
       createdAt: "desc",
     },
   });
 
   if (!boards) return null;
-  if (!userId) return null;
 
   //Filtering tasks by section and board
   const sections = await prismadb.sections.findMany({
@@ -50,14 +40,6 @@ export const getTasks = async () => {
           section: section.id,
         };
       }),
-    },
-    include: {
-      assigned_user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
     },
     orderBy: { createdAt: "desc" },
   });

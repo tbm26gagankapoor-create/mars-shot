@@ -5,14 +5,6 @@ export const getUserTasks = async (userId: string) => {
     where: {
       user: userId,
     },
-    include: {
-      assigned_user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
     orderBy: {
       createdAt: "desc",
     },
