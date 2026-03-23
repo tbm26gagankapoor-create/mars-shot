@@ -48,13 +48,14 @@ export function DealCard({ deal }: { deal: DealCardData }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.7 : 1,
+    zIndex: isDragging ? 50 : undefined,
   };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Link href={`/deals/${deal.id}`}>
-        <Card className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow duration-200 mb-2">
+        <Card className="cursor-grab active:cursor-grabbing hover:shadow-soft-lg hover:-translate-y-0.5 transition-all duration-200 mb-2">
           <CardHeader className="p-3 pb-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">

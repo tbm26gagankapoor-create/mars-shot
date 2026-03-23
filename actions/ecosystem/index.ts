@@ -23,7 +23,20 @@ export async function getContactById(id: string) {
   return prisma.contact.findUnique({
     where: { id },
     include: {
-      activities: { orderBy: { createdAt: "desc" }, take: 20 },
+      activities: { orderBy: { createdAt: "desc" }, take: 50 },
+      referredDeals: {
+        select: {
+          id: true,
+          companyName: true,
+          sector: true,
+          stage: true,
+          status: true,
+          fundingStage: true,
+          chequeSize: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 }
@@ -71,15 +84,33 @@ export async function updateContact(
 
 export async function logInteraction(
   contactId: string,
-  data: { title: string; description?: string; metadata?: Record<string, unknown> }
+  data: {
+    title: string;
+    description?: string;
+    interactionType?: string;
+    meetingFormat?: string;
+    meetingDate?: string;
+    attendees?: string;
+    followUpNote?: string;
+    followUpDueAt?: string;
+  }
 ) {
+  const meta: Record<string, string> = {
+    interactionType: data.interactionType ?? "NOTE",
+  };
+  if (data.meetingFormat) meta.meetingFormat = data.meetingFormat;
+  if (data.meetingDate) meta.meetingDate = data.meetingDate;
+  if (data.attendees) meta.attendees = data.attendees;
+  if (data.followUpNote) meta.followUpNote = data.followUpNote;
+  if (data.followUpDueAt) meta.followUpDueAt = data.followUpDueAt;
+
   const [activity] = await Promise.all([
     prisma.activity.create({
       data: {
-        type: "INTERACTION",
+        type: data.interactionType ?? "INTERACTION",
         title: data.title,
         description: data.description,
-        metadata: data.metadata as never,
+        metadata: meta as never,
         contactId,
       },
     }),
@@ -93,6 +124,18 @@ export async function logInteraction(
   ]);
 
   return activity;
+}
+
+export async function searchContacts(query: string, take = 10) {
+  if (query.trim().length < 2) return [];
+  return prisma.contact.findMany({
+    where: {
+      name: { contains: query, mode: "insensitive" },
+    },
+    select: { id: true, name: true, organization: true },
+    take,
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function getColdContacts() {

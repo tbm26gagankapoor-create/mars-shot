@@ -4,14 +4,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getDealById } from "@/actions/deals";
-import { DEAL_STAGES, SECTOR_LABELS, FUNDING_STAGE_LABELS, SOURCE_TYPE_LABELS } from "@/lib/constants";
+import {
+  DEAL_STAGES,
+  SECTOR_LABELS,
+  FUNDING_STAGE_LABELS,
+  SOURCE_TYPE_LABELS,
+  BUSINESS_MODEL_LABELS,
+  REVENUE_TYPE_LABELS,
+  PASS_REASON_LABELS,
+} from "@/lib/constants";
 import { SlaTimer } from "@/components/deals/sla-timer";
 import { DealStageProgress } from "@/components/deals/deal-stage-progress";
 import { DealActions } from "@/components/deals/deal-actions";
 import { DocumentUpload } from "@/components/deals/document-upload";
 import { AiGenerateButtons } from "@/components/deals/ai-generate-buttons";
-import { ExternalLink, Mail, Phone, Linkedin, User } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
+import { DealEditTrigger } from "@/components/deals/deal-edit-trigger";
+import {
+  ExternalLink, Mail, Phone, Linkedin, User, MapPin, Users, Building,
+  Calendar, Star, AlertTriangle, Twitter, TrendingUp, DollarSign,
+} from "lucide-react";
+import { formatDistanceToNow, format, isPast, differenceInHours } from "date-fns";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -38,6 +50,7 @@ export default async function DealDetailPage({ params }: Props) {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="font-display text-2xl font-semibold tracking-tight">{deal.companyName}</h1>
+            <DealEditTrigger deal={deal} />
             <Badge variant={deal.status === "ACTIVE" ? "default" : "secondary"}>
               {deal.status}
             </Badge>
@@ -67,7 +80,24 @@ export default async function DealDetailPage({ params }: Props) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4">
+        <TabsContent value="overview" className="mt-4 space-y-6">
+          {/* Pass Reason Banner */}
+          {deal.status === "PASSED" && deal.passReasonCategory && (
+            <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+              <CardContent className="py-3 flex items-start gap-3">
+                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-800 dark:text-amber-300">
+                    Passed — {PASS_REASON_LABELS[deal.passReasonCategory] || deal.passReasonCategory}
+                  </p>
+                  {deal.passReason && (
+                    <p className="text-amber-700 dark:text-amber-400 mt-1">{deal.passReason}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Company Info */}
             <Card>
@@ -75,23 +105,50 @@ export default async function DealDetailPage({ params }: Props) {
                 <CardTitle className="text-base">Company</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {deal.description && (
+                  <p className="text-sm text-muted-foreground">{deal.description}</p>
+                )}
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="text-muted-foreground">Sector</span>
                     <p>{deal.sector ? SECTOR_LABELS[deal.sector] || deal.sector : "—"}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Stage</span>
+                    <span className="text-muted-foreground">Funding Stage</span>
                     <p>{deal.fundingStage ? FUNDING_STAGE_LABELS[deal.fundingStage] || deal.fundingStage : "—"}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Cheque</span>
-                    <p>{deal.chequeSize ? `$${(deal.chequeSize / 1000).toFixed(0)}K` : "—"}</p>
+                    <span className="text-muted-foreground">Business Model</span>
+                    <p>{deal.businessModel ? BUSINESS_MODEL_LABELS[deal.businessModel] || deal.businessModel : "—"}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Source</span>
                     <p>{deal.sourceType ? SOURCE_TYPE_LABELS[deal.sourceType] || deal.sourceType : "—"}</p>
                   </div>
+                  {deal.location && (
+                    <div>
+                      <span className="text-muted-foreground">Location</span>
+                      <p className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {deal.location}</p>
+                    </div>
+                  )}
+                  {deal.teamSize && (
+                    <div>
+                      <span className="text-muted-foreground">Team Size</span>
+                      <p className="flex items-center gap-1"><Users className="h-3 w-3" /> {deal.teamSize}</p>
+                    </div>
+                  )}
+                  {deal.foundedDate && (
+                    <div>
+                      <span className="text-muted-foreground">Founded</span>
+                      <p className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {format(deal.foundedDate, "MMM yyyy")}</p>
+                    </div>
+                  )}
+                  {deal.legalEntityName && (
+                    <div>
+                      <span className="text-muted-foreground">Legal Entity</span>
+                      <p className="flex items-center gap-1"><Building className="h-3 w-3" /> {deal.legalEntityName}</p>
+                    </div>
+                  )}
                 </div>
                 {deal.website && (
                   <a
@@ -104,11 +161,87 @@ export default async function DealDetailPage({ params }: Props) {
                     {deal.website}
                   </a>
                 )}
-                {deal.source && (
+                {deal.referredByContact ? (
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Referred by:</span>{" "}
+                    <a href={`/en/ecosystem/${deal.referredByContact.id}`} className="text-primary hover:underline">
+                      {deal.referredByContact.name}
+                      {deal.referredByContact.organization && ` (${deal.referredByContact.organization})`}
+                    </a>
+                  </p>
+                ) : deal.source ? (
                   <p className="text-sm"><span className="text-muted-foreground">Referred by:</span> {deal.source}</p>
-                )}
+                ) : null}
               </CardContent>
             </Card>
+
+            {/* Deal Terms */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Deal Terms</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Our Cheque</span>
+                    <p>{deal.chequeSize ? `$${(deal.chequeSize / 1000).toFixed(0)}K` : "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Total Round</span>
+                    <p>{deal.totalRoundSize ? `$${(deal.totalRoundSize / 1_000_000).toFixed(1)}M` : "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Pre-Money Valuation</span>
+                    <p>{deal.preMoneyValuation ? `$${(deal.preMoneyValuation / 1_000_000).toFixed(1)}M` : "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Existing Investors</span>
+                    <p>{deal.existingInvestors || "—"}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Traction & Financials — only if any field present */}
+            {(deal.revenue || deal.burnRate || deal.runway) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" /> Traction
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {deal.revenue != null && (
+                      <div>
+                        <span className="text-muted-foreground">Revenue</span>
+                        <p className="flex items-center gap-1">
+                          <DollarSign className="h-3 w-3" />
+                          {`$${(deal.revenue / 1000).toFixed(0)}K`}
+                          {deal.revenueType && (
+                            <Badge variant="outline" className="ml-1 text-xs">
+                              {REVENUE_TYPE_LABELS[deal.revenueType] || deal.revenueType}
+                            </Badge>
+                          )}
+                        </p>
+                      </div>
+                    )}
+                    {deal.burnRate != null && (
+                      <div>
+                        <span className="text-muted-foreground">Burn Rate</span>
+                        <p>${(deal.burnRate / 1000).toFixed(0)}K/mo</p>
+                      </div>
+                    )}
+                    {deal.runway != null && (
+                      <div>
+                        <span className="text-muted-foreground">Runway</span>
+                        <p>{deal.runway} months</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Founders */}
             <Card>
@@ -121,7 +254,7 @@ export default async function DealDetailPage({ params }: Props) {
                     <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{founder.name} {founder.title && <span className="text-muted-foreground font-normal">({founder.title})</span>}</p>
-                      <div className="flex gap-3 text-muted-foreground">
+                      <div className="flex flex-wrap gap-3 text-muted-foreground">
                         {founder.email && (
                           <a href={`mailto:${founder.email}`} className="flex items-center gap-1 hover:text-primary">
                             <Mail className="h-3 w-3" /> {founder.email}
@@ -137,7 +270,18 @@ export default async function DealDetailPage({ params }: Props) {
                             <Linkedin className="h-3 w-3" />
                           </a>
                         )}
+                        {founder.twitter && (
+                          <a href={founder.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                            <Twitter className="h-3 w-3" />
+                          </a>
+                        )}
                       </div>
+                      {(founder.previousCompanies || founder.education) && (
+                        <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
+                          {founder.previousCompanies && <p>Previously: {founder.previousCompanies}</p>}
+                          {founder.education && <p>Education: {founder.education}</p>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -192,6 +336,57 @@ export default async function DealDetailPage({ params }: Props) {
               </Card>
             )}
           </div>
+
+          {/* Tags & Internal */}
+          {(deal.tags?.length > 0 || deal.convictionScore || deal.nextAction) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Internal</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {deal.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {deal.tags.map((tag: string) => (
+                      <Badge key={tag} variant="secondary">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-6 text-sm">
+                  {deal.convictionScore && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground mr-1">Conviction:</span>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${i < deal.convictionScore! ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {deal.nextAction && (
+                    <div>
+                      <span className="text-muted-foreground">Next action:</span>{" "}
+                      <span>{deal.nextAction}</span>
+                      {deal.nextActionDueAt && (
+                        <Badge
+                          variant="outline"
+                          className={`ml-2 text-xs ${
+                            isPast(deal.nextActionDueAt)
+                              ? "border-red-500 text-red-600"
+                              : differenceInHours(deal.nextActionDueAt, new Date()) < 24
+                                ? "border-yellow-500 text-yellow-600"
+                                : ""
+                          }`}
+                        >
+                          Due {format(deal.nextActionDueAt, "MMM d")}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">

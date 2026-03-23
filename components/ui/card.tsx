@@ -9,8 +9,9 @@ const Card = ({
 }: React.HTMLAttributes<HTMLDivElement> & { ref?: React.Ref<HTMLDivElement> }) => (
   <div
     ref={ref}
+    data-slot="card"
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200",
+      "rounded-xl border bg-card text-card-foreground shadow-xs ring-1 ring-black/[0.03] dark:ring-white/[0.05] transition-all duration-200",
       className
     )}
     {...props}

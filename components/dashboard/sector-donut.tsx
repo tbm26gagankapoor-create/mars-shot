@@ -14,13 +14,13 @@ type SectorDonutProps = {
 };
 
 const SECTOR_COLORS = [
-  "hsl(210, 80%, 55%)",
-  "hsl(150, 60%, 45%)",
-  "hsl(35, 90%, 55%)",
-  "hsl(280, 60%, 55%)",
-  "hsl(0, 70%, 55%)",
-  "hsl(170, 55%, 50%)",
-  "hsl(45, 80%, 50%)",
+  "hsl(224, 76%, 48%)",
+  "hsl(152, 50%, 45%)",
+  "hsl(45, 80%, 52%)",
+  "hsl(280, 45%, 55%)",
+  "hsl(195, 55%, 48%)",
+  "hsl(340, 55%, 50%)",
+  "hsl(170, 45%, 42%)",
 ];
 
 export function SectorDonut({ data }: SectorDonutProps) {

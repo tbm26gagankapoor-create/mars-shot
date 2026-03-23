@@ -130,15 +130,17 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             isExpanded ? "gap-3 px-1" : "justify-center"
           )}
         >
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 shadow-sm shadow-orange-500/25 flex items-center justify-center shrink-0">
-            <span className="text-sm font-bold text-white leading-none tracking-tight">M</span>
-          </div>
+          <img
+            src="/images/marsshot-icon.svg"
+            alt="Mars Shot"
+            className="h-8 w-8 rounded-lg shadow-md shadow-blue-500/15 ring-1 ring-blue-500/10 shrink-0"
+          />
           {isExpanded && (
             <div>
               <h1 className="font-display font-semibold text-sm text-sidebar-primary tracking-tight">
                 Mars Shot
               </h1>
-              <p className="text-[10px] text-sidebar-foreground/50 -mt-0.5 tracking-wider uppercase">
+              <p className="text-[9px] text-sidebar-foreground/30 -mt-0.5 tracking-[0.15em] uppercase">
                 Venture Capital
               </p>
             </div>

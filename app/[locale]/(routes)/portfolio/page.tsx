@@ -6,7 +6,16 @@ import {
   getPortfolioCompanies,
   getQuietPortfolioCompanies,
 } from "@/actions/portfolio";
-import { SECTOR_LABELS, FUNDING_STAGE_LABELS } from "@/lib/constants";
+import {
+  SECTOR_LABELS,
+  FUNDING_STAGE_LABELS,
+  SECTOR_COLORS,
+  HEALTH_STATUS_COLORS,
+  HEALTH_STATUS_LABELS,
+  RUNWAY_THRESHOLDS,
+} from "@/lib/constants";
+import { CompanyLogo } from "@/components/portfolio/company-logo";
+import { HealthStatusBadge } from "@/components/portfolio/health-status-badge";
 import { format } from "date-fns";
 import {
   AlertTriangle,
@@ -14,7 +23,10 @@ import {
   DollarSign,
   User,
   Briefcase,
+  TrendingUp,
+  Flame,
 } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function PortfolioPage() {
   let companies: Awaited<ReturnType<typeof getPortfolioCompanies>> = [];
@@ -23,13 +35,10 @@ export default async function PortfolioPage() {
   > = [];
 
   try {
-    companies = await getPortfolioCompanies();
-  } catch {
-    // DB not connected
-  }
-
-  try {
-    quietCompanies = await getQuietPortfolioCompanies();
+    [companies, quietCompanies] = await Promise.all([
+      getPortfolioCompanies(),
+      getQuietPortfolioCompanies(),
+    ]);
   } catch {
     // DB not connected
   }
@@ -40,7 +49,7 @@ export default async function PortfolioPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
         <h1 className="font-display text-2xl font-semibold tracking-tight">Portfolio</h1>
@@ -129,31 +138,43 @@ export default async function PortfolioPage() {
       {/* Portfolio Grid */}
       {companies.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-display font-medium">No portfolio companies yet</p>
-            <p className="text-xs text-muted-foreground">
-              Companies are auto-created when deals close
-            </p>
+          <CardContent className="py-4">
+            <EmptyState
+              icon={Building2}
+              title="No portfolio companies yet"
+              description="Companies are auto-created when deals close"
+            />
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger">
           {companies.map((company) => (
             <Link key={company.id} href={`/portfolio/${company.id}`}>
-              <Card className="hover:shadow-md hover:border-primary/20 transition-all duration-200 cursor-pointer h-full">
+              <Card className="hover:shadow-soft-lg hover:-translate-y-0.5 hover:border-primary/20 transition-all duration-200 cursor-pointer h-full">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-base">
-                      {company.companyName}
-                    </CardTitle>
-                    {company.sector && (
-                      <Badge variant="secondary" className="shrink-0">
-                        {SECTOR_LABELS[company.sector] || company.sector}
-                      </Badge>
-                    )}
+                  <div className="flex items-start gap-3">
+                    <CompanyLogo
+                      companyName={company.companyName}
+                      website={company.website}
+                      sector={company.sector}
+                      size="sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base truncate">
+                        {company.companyName}
+                      </CardTitle>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {company.sector && (
+                          <Badge
+                            variant="outline"
+                            className={SECTOR_COLORS[company.sector] ?? SECTOR_COLORS.OTHER}
+                          >
+                            {SECTOR_LABELS[company.sector] || company.sector}
+                          </Badge>
+                        )}
+                        <HealthStatusBadge status={company.healthStatus} size="sm" />
+                      </div>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
@@ -192,6 +213,36 @@ export default async function PortfolioPage() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Latest KPI metrics */}
+                  {company.kpiSnapshots?.[0] && (() => {
+                    const kpi = company.kpiSnapshots[0];
+                    const hasMrr = kpi.mrr != null;
+                    const hasRunway = kpi.runway != null;
+                    if (!hasMrr && !hasRunway) return null;
+                    return (
+                      <div className="flex items-center gap-3 text-xs">
+                        {hasMrr && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <TrendingUp className="h-3 w-3" />
+                            MRR ${kpi.mrr! >= 1000 ? `${(kpi.mrr! / 1000).toFixed(0)}K` : kpi.mrr!.toLocaleString()}
+                          </span>
+                        )}
+                        {hasRunway && (
+                          <span className={`flex items-center gap-1 ${
+                            kpi.runway! < RUNWAY_THRESHOLDS.critical
+                              ? "text-red-600"
+                              : kpi.runway! < RUNWAY_THRESHOLDS.warning
+                                ? "text-amber-600"
+                                : "text-muted-foreground"
+                          }`}>
+                            <Flame className="h-3 w-3" />
+                            {kpi.runway}mo runway
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {company.founderName && (
                     <>

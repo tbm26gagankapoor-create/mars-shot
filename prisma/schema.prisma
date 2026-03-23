@@ -94,6 +94,38 @@ enum SourceType {
   OTHER
 }
 
+enum PassReasonCategory {
+  SECTOR_MISMATCH
+  STAGE_TOO_LATE
+  WEAK_TEAM
+  VALUATION
+  COMPETITIVE
+  OTHER
+}
+
+enum CompanyHealthStatus {
+  ON_TRACK
+  WATCH
+  AT_RISK
+  WRITE_OFF
+}
+
+enum RevenueType {
+  MRR
+  ARR
+  GMV
+  NONE
+}
+
+enum BusinessModel {
+  SAAS
+  MARKETPLACE
+  TRANSACTIONAL
+  D2C_ECOMMERCE
+  ADVERTISING
+  OTHER
+}
+
 // ─── User (Supabase Auth — minimal local record) ──────
 
 model User {
@@ -167,6 +199,39 @@ model Deal {
   // AI extraction metadata
   aiConfidence Float?
 
+  // Company details
+  description    String?
+  location       String?
+  teamSize       Int?
+  foundedDate    DateTime?
+  legalEntityName String?
+  businessModel  BusinessModel?
+
+  // Round & valuation
+  totalRoundSize    Float?
+  preMoneyValuation Float?
+
+  // Traction & financials
+  revenue          Float?
+  revenueType      RevenueType?
+  burnRate         Float?
+  runway           Float?
+  existingInvestors String?
+
+  // Pass tracking
+  passReason         String?
+  passReasonCategory PassReasonCategory?
+
+  // Referrer link
+  referredByContactId String?
+  referredByContact   Contact? @relation("ReferredDeals", fields: [referredByContactId], references: [id], onDelete: SetNull)
+
+  // Tags & internal scoring
+  tags            String[]
+  convictionScore Int?
+  nextAction      String?
+  nextActionDueAt DateTime?
+
   // Relations
   founders       Founder[]
   documents      Document[]
@@ -179,6 +244,7 @@ model Deal {
   @@index([stage])
   @@index([status])
   @@index([slaDueAt])
+  @@index([referredByContactId])
   @@map("deals")
 }
 
@@ -192,6 +258,11 @@ model Founder {
   phone    String?
   linkedin String?
   title    String?
+
+  // Enrichment
+  previousCompanies String?
+  education         String?
+  twitter           String?
 
   dealId String
   deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
@@ -217,6 +288,18 @@ model PortfolioCompany {
   founderEmail String?
   founderPhone String?
 
+  // Investment performance
+  entryValuation    Float?
+  ownershipPct      Float?
+  currentValuation  Float?
+  proRataRights     Boolean @default(false)
+  boardSeat         Boolean @default(false)
+
+  // Operational health
+  healthStatus  CompanyHealthStatus @default(ON_TRACK)
+  nextMilestone String?
+  coInvestors   String[]
+
   dealId String? @unique
   deal   Deal?   @relation(fields: [dealId], references: [id])
 
@@ -225,8 +308,30 @@ model PortfolioCompany {
   activities     Activity[]
   documents      Document[]
   calendarEvents CalendarEvent[]
+  kpiSnapshots   KpiSnapshot[]
 
   @@map("portfolio_companies")
+}
+
+model KpiSnapshot {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  periodDate DateTime
+  arr        Float?
+  mrr        Float?
+  burnRate   Float?
+  runway     Float?
+  headcount  Int?
+  customers  Int?
+  notes      String?
+
+  portfolioCompanyId String
+  portfolioCompany   PortfolioCompany @relation(fields: [portfolioCompanyId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioCompanyId, periodDate])
+  @@index([portfolioCompanyId])
+  @@map("kpi_snapshots")
 }
 
 model FollowOnRound {
@@ -284,6 +389,7 @@ model Contact {
   activities     Activity[]
   documents      Document[]
   calendarEvents CalendarEvent[]
+  referredDeals  Deal[]          @relation("ReferredDeals")
 
   @@index([warmthScore])
   @@index([lastInteractionAt])

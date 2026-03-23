@@ -4,6 +4,8 @@ import type {
   IngestionChannel,
   Sector,
   FundingStage,
+  RevenueType,
+  BusinessModel,
 } from "@prisma/client";
 import { DEAL_STAGES } from "@/lib/constants";
 
@@ -33,6 +35,17 @@ const VALID_FUNDING_STAGES: FundingStage[] = [
   "OTHER",
 ];
 
+const VALID_REVENUE_TYPES: RevenueType[] = ["MRR", "ARR", "GMV", "NONE"];
+
+const VALID_BUSINESS_MODELS: BusinessModel[] = [
+  "SAAS",
+  "MARKETPLACE",
+  "TRANSACTIONAL",
+  "D2C_ECOMMERCE",
+  "ADVERTISING",
+  "OTHER",
+];
+
 type IngestBody = {
   channel: string;
   rawText: string;
@@ -42,6 +55,14 @@ type IngestBody = {
   website?: string;
   sector?: string;
   fundingStage?: string;
+  description?: string;
+  revenue?: number;
+  revenueType?: string;
+  totalRoundSize?: number;
+  location?: string;
+  teamSize?: number;
+  businessModel?: string;
+  tags?: string[];
 };
 
 /**
@@ -96,6 +117,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (
+      body.revenueType &&
+      !VALID_REVENUE_TYPES.includes(body.revenueType as RevenueType)
+    ) {
+      return NextResponse.json(
+        { error: `revenueType must be one of: ${VALID_REVENUE_TYPES.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    if (
+      body.businessModel &&
+      !VALID_BUSINESS_MODELS.includes(body.businessModel as BusinessModel)
+    ) {
+      return NextResponse.json(
+        { error: `businessModel must be one of: ${VALID_BUSINESS_MODELS.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
     // ── Compute SLA deadline ───────────────────────────
     const stageEnteredAt = new Date();
     const stageDef = DEAL_STAGES.find((s) => s.key === "DEAL_SOURCE");
@@ -124,6 +165,18 @@ export async function POST(req: NextRequest) {
         rawIngestionText: body.rawText,
         stageEnteredAt,
         slaDueAt,
+        description: body.description || undefined,
+        revenue: body.revenue || undefined,
+        revenueType: body.revenueType
+          ? (body.revenueType as RevenueType)
+          : undefined,
+        totalRoundSize: body.totalRoundSize || undefined,
+        location: body.location || undefined,
+        teamSize: body.teamSize || undefined,
+        businessModel: body.businessModel
+          ? (body.businessModel as BusinessModel)
+          : undefined,
+        tags: body.tags || undefined,
       },
     });
 

@@ -23,9 +23,11 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
         <div className="flex flex-col items-center grow h-full overflow-hidden justify-center">
           <div className="flex flex-col items-center gap-3 mb-10">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/25 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white leading-none tracking-tight">M</span>
-            </div>
+            <img
+              src="/images/marsshot-icon.svg"
+              alt="Mars Shot"
+              className="h-14 w-14 rounded-2xl shadow-lg shadow-orange-500/25"
+            />
             <div className="text-center">
               <h1 className="font-display text-xl font-semibold tracking-tight text-white">Mars Shot</h1>
               <p className="text-[10px] text-white/70 tracking-widest uppercase">Venture Capital</p>

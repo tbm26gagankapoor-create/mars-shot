@@ -21,9 +21,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronRight, MoreHorizontal, XCircle, Trophy, Pause, Play, Loader2 } from "lucide-react";
 import { advanceStage, closeDeal, checkStageGate, updateDeal } from "@/actions/deals";
-import { DEAL_STAGES } from "@/lib/constants";
+import { DEAL_STAGES, PASS_REASON_CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 
 type DealActionsProps = {
@@ -44,6 +47,8 @@ export function DealActions({ dealId, currentStage, status }: DealActionsProps) 
     open: boolean;
     type: "CLOSED_WON" | "CLOSED_LOST" | "PASSED" | null;
   }>({ open: false, type: null });
+  const [passReasonCategory, setPassReasonCategory] = useState("");
+  const [passReason, setPassReason] = useState("");
 
   const currentIdx = DEAL_STAGES.findIndex((s) => s.key === currentStage);
   const isLastStage = currentIdx === DEAL_STAGES.length - 1;
@@ -88,7 +93,11 @@ export function DealActions({ dealId, currentStage, status }: DealActionsProps) 
   async function handleClose(type: "CLOSED_WON" | "CLOSED_LOST" | "PASSED") {
     setLoading(true);
     try {
-      await closeDeal(dealId, type);
+      const passData = type === "PASSED" ? {
+        passReason: passReason || undefined,
+        passReasonCategory: passReasonCategory || undefined,
+      } : undefined;
+      await closeDeal(dealId, type, passData);
       const label = type === "CLOSED_WON" ? "Won" : type === "CLOSED_LOST" ? "Lost" : "Passed";
       toast.success(`Deal marked as ${label}`);
       router.refresh();
@@ -97,6 +106,8 @@ export function DealActions({ dealId, currentStage, status }: DealActionsProps) 
     } finally {
       setLoading(false);
       setCloseDialog({ open: false, type: null });
+      setPassReasonCategory("");
+      setPassReason("");
     }
   }
 
@@ -194,7 +205,10 @@ export function DealActions({ dealId, currentStage, status }: DealActionsProps) 
       </AlertDialog>
 
       {/* Close Deal Confirmation */}
-      <AlertDialog open={closeDialog.open} onOpenChange={(open) => setCloseDialog((prev) => ({ ...prev, open }))}>
+      <AlertDialog open={closeDialog.open} onOpenChange={(open) => {
+        setCloseDialog((prev) => ({ ...prev, open }));
+        if (!open) { setPassReasonCategory(""); setPassReason(""); }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -208,15 +222,39 @@ export function DealActions({ dealId, currentStage, status }: DealActionsProps) 
               {closeDialog.type === "CLOSED_WON"
                 ? "This will mark the deal as won and create a portfolio company entry."
                 : closeDialog.type === "PASSED"
-                ? "This will mark the deal as passed. You can reopen it later if needed."
+                ? "Select a reason for passing. You can reopen it later if needed."
                 : "This will mark the deal as lost."}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {closeDialog.type === "PASSED" && (
+            <div className="space-y-3 py-2">
+              <div className="space-y-2">
+                <Label className="text-sm">Pass Reason Category *</Label>
+                <Select value={passReasonCategory} onValueChange={setPassReasonCategory}>
+                  <SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger>
+                  <SelectContent>
+                    {PASS_REASON_CATEGORIES.map((c) => (
+                      <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Notes (optional)</Label>
+                <Textarea
+                  value={passReason}
+                  onChange={(e) => setPassReason(e.target.value)}
+                  rows={3}
+                  placeholder="Why are you passing on this deal?"
+                />
+              </div>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => closeDialog.type && handleClose(closeDialog.type)}
-              disabled={loading}
+              disabled={loading || (closeDialog.type === "PASSED" && !passReasonCategory)}
               className={closeDialog.type === "CLOSED_WON" ? "bg-green-600 hover:bg-green-700" : ""}
             >
               {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}

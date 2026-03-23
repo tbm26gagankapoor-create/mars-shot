@@ -4,7 +4,9 @@ import { prismadb as prisma } from "@/lib/prisma";
 import { DEAL_STAGES, STAGE_GATES } from "@/lib/constants";
 import { executeStageChangeHooks } from "@/lib/workflows/engine";
 import { logAudit } from "@/lib/audit";
-import type { DealStage, DealStatus, Sector, FundingStage, SourceType, IngestionChannel } from "@prisma/client";
+import { createSafeAction } from "@/lib/create-safe-action";
+import { fullDealSchema } from "@/lib/schemas/deal";
+import type { DealStage, DealStatus, Sector, FundingStage, SourceType, IngestionChannel, BusinessModel, RevenueType, PassReasonCategory } from "@prisma/client";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -27,6 +29,29 @@ export type CreateDealInput = {
   chequeFit?: boolean;
   razorpayRelevance?: boolean;
   founderBackground?: string;
+  // Company details
+  description?: string;
+  location?: string;
+  teamSize?: number;
+  foundedDate?: Date | string;
+  legalEntityName?: string;
+  businessModel?: BusinessModel;
+  // Round & valuation
+  totalRoundSize?: number;
+  preMoneyValuation?: number;
+  // Traction & financials
+  revenue?: number;
+  revenueType?: RevenueType;
+  burnRate?: number;
+  runway?: number;
+  existingInvestors?: string;
+  // Referrer
+  referredByContactId?: string;
+  // Tags & internal
+  tags?: string[];
+  convictionScore?: number;
+  nextAction?: string;
+  nextActionDueAt?: Date | string;
   // Founders
   founders?: {
     name: string;
@@ -34,6 +59,9 @@ export type CreateDealInput = {
     phone?: string;
     linkedin?: string;
     title?: string;
+    previousCompanies?: string;
+    education?: string;
+    twitter?: string;
   }[];
 };
 
@@ -45,6 +73,9 @@ export type UpdateDealInput = Partial<CreateDealInput> & {
   ddChecklistStarted?: boolean;
   partnerBriefUploaded?: boolean;
   finalDecisionRecorded?: boolean;
+  // Pass tracking
+  passReason?: string;
+  passReasonCategory?: PassReasonCategory;
 };
 
 // ─── CRUD ───────────────────────────────────────────────
@@ -76,6 +107,7 @@ export async function getDealById(id: string) {
       documents: { orderBy: { createdAt: "desc" } },
       activities: { orderBy: { createdAt: "desc" }, take: 20 },
       aiOutputs: { orderBy: { createdAt: "desc" } },
+      referredByContact: { select: { id: true, name: true, organization: true } },
     },
   });
 }
@@ -84,7 +116,7 @@ export async function getDealsByStage() {
   const deals = await prisma.deal.findMany({
     where: { status: { in: ["ACTIVE", "DRAFT"] } },
     include: {
-      founders: true,
+      founders: { select: { id: true, name: true, title: true } },
       _count: { select: { documents: true } },
     },
     orderBy: { stageEnteredAt: "asc" },
@@ -138,6 +170,32 @@ export async function createDeal(input: CreateDealInput) {
 
   return deal;
 }
+
+// ─── Validated create (for UI forms) ────────────────────
+
+export const createDealSafe = createSafeAction(fullDealSchema, async (data) => {
+  const deal = await createDeal({
+    companyName: data.companyName,
+    website: data.website || undefined,
+    sector: data.sector as Sector | undefined,
+    fundingStage: data.fundingStage as FundingStage | undefined,
+    chequeSize: data.chequeSize,
+    source: data.source || undefined,
+    sourceType: data.sourceType as SourceType | undefined,
+    stage: (data.stage as DealStage) || undefined,
+    status: (data.status as DealStatus) || undefined,
+    ingestionChannel: (data.ingestionChannel as IngestionChannel) || undefined,
+    rawIngestionText: data.rawIngestionText || undefined,
+    aiConfidence: data.aiConfidence,
+    sectorFit: data.sectorFit,
+    stageFit: data.stageFit,
+    chequeFit: data.chequeFit,
+    razorpayRelevance: data.razorpayRelevance,
+    founderBackground: data.founderBackground || undefined,
+    founders: data.founders?.filter((f) => f.name.trim()) || [],
+  });
+  return { data: deal };
+});
 
 export async function updateDeal(id: string, input: UpdateDealInput) {
   const { founders, ...dealData } = input;
@@ -336,10 +394,20 @@ export async function moveDealToStage(dealId: string, targetStage: DealStage) {
 
 // ─── Deal Closure ───────────────────────────────────────
 
-export async function closeDeal(dealId: string, status: "CLOSED_WON" | "CLOSED_LOST" | "PASSED") {
+export async function closeDeal(
+  dealId: string,
+  status: "CLOSED_WON" | "CLOSED_LOST" | "PASSED",
+  passData?: { passReason?: string; passReasonCategory?: string }
+) {
   const deal = await prisma.deal.update({
     where: { id: dealId },
-    data: { status },
+    data: {
+      status,
+      ...(status === "PASSED" && passData && {
+        passReason: passData.passReason,
+        passReasonCategory: passData.passReasonCategory as PassReasonCategory | undefined,
+      }),
+    },
     include: { founders: true },
   });
 
@@ -398,6 +466,10 @@ export async function getDraftDeals() {
   });
 }
 
+export async function getDraftDealCount() {
+  return prisma.deal.count({ where: { status: "DRAFT" } });
+}
+
 export async function approveDraft(dealId: string) {
   const deal = await prisma.deal.update({
     where: { id: dealId },
@@ -426,6 +498,12 @@ export async function getBreachedDeals() {
     },
     include: { founders: true },
     orderBy: { slaDueAt: "asc" },
+  });
+}
+
+export async function getBreachedDealCount() {
+  return prisma.deal.count({
+    where: { status: "ACTIVE", slaDueAt: { lt: new Date() } },
   });
 }
 

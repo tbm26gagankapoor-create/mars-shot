@@ -1,6 +1,9 @@
 "use client";
 
-import { Temporal } from "temporal-polyfill";
+// Must be imported before @schedule-x so the polyfill is on globalThis
+// when Schedule-X validates Temporal types.
+import "@/lib/temporal-polyfill-global";
+
 import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
 import {
   createViewDay,
@@ -9,6 +12,10 @@ import {
 } from "@schedule-x/calendar";
 import { useRouter } from "next/navigation";
 import "@schedule-x/theme-default/dist/index.css";
+
+// Use the Temporal from globalThis (set by our polyfill) so that instanceof
+// checks inside Schedule-X pass — both sides reference the same class.
+const T = (globalThis as unknown as { Temporal: typeof import("temporal-polyfill").Temporal }).Temporal;
 
 type CalendarViewEvent = {
   id: string;
@@ -22,10 +29,8 @@ type CalendarViewProps = {
   events: CalendarViewEvent[];
 };
 
-function toZonedDateTime(dateStr: string): Temporal.ZonedDateTime {
-  return Temporal.PlainDateTime.from(dateStr).toZonedDateTime(
-    Temporal.Now.timeZoneId()
-  );
+function toZonedDateTime(dateStr: string) {
+  return T.PlainDateTime.from(dateStr).toZonedDateTime(T.Now.timeZoneId());
 }
 
 export function CalendarView({ events }: CalendarViewProps) {

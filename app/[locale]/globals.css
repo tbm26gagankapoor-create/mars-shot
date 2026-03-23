@@ -44,41 +44,41 @@
 
 @layer base {
   :root {
-    --background: 40 20% 98%;
+    --background: 40 25% 97.5%;
     --foreground: 240 6% 10%;
     --card: 0 0% 100%;
     --card-foreground: 240 6% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 6% 10%;
-    --primary: 234 60% 55%;
+    --primary: 224 76% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 40 10% 95%;
+    --secondary: 40 15% 94%;
     --secondary-foreground: 240 6% 25%;
-    --muted: 40 10% 95%;
+    --muted: 40 15% 94%;
     --muted-foreground: 240 4% 46%;
-    --accent: 40 10% 93%;
+    --accent: 40 12% 92%;
     --accent-foreground: 240 6% 10%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 40 10% 90%;
-    --input: 40 10% 90%;
-    --ring: 234 60% 55%;
+    --border: 40 12% 88%;
+    --input: 40 12% 88%;
+    --ring: 224 76% 48%;
     --radius: 0.625rem;
 
-    --sidebar-background: 240 6% 7%;
-    --sidebar-foreground: 240 4% 60%;
+    --sidebar-background: 228 12% 10%;
+    --sidebar-foreground: 220 8% 65%;
     --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 240 6% 7%;
-    --sidebar-accent: 240 5% 13%;
+    --sidebar-primary-foreground: 228 12% 10%;
+    --sidebar-accent: 224 20% 16%;
     --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 240 5% 14%;
-    --sidebar-ring: 234 60% 55%;
+    --sidebar-border: 228 10% 16%;
+    --sidebar-ring: 224 76% 48%;
 
     --health-green: 152 55% 42%;
     --health-amber: 38 92% 50%;
     --health-red: 0 72% 51%;
 
-    --chart-1: 234 60% 55%;
+    --chart-1: 224 76% 48%;
     --chart-2: 152 55% 42%;
     --chart-3: 38 92% 50%;
     --chart-4: 280 45% 55%;
@@ -86,40 +86,40 @@
   }
 
   .dark {
-    --background: 240 6% 7%;
-    --foreground: 240 5% 85%;
-    --card: 240 6% 9%;
-    --card-foreground: 240 5% 85%;
-    --popover: 240 6% 9%;
-    --popover-foreground: 240 5% 85%;
-    --primary: 234 65% 65%;
+    --background: 228 12% 8%;
+    --foreground: 228 8% 85%;
+    --card: 228 12% 10%;
+    --card-foreground: 228 8% 85%;
+    --popover: 228 12% 10%;
+    --popover-foreground: 228 8% 85%;
+    --primary: 224 70% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 13%;
-    --secondary-foreground: 240 5% 80%;
-    --muted: 240 5% 13%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 240 5% 15%;
-    --accent-foreground: 240 5% 85%;
+    --secondary: 228 10% 14%;
+    --secondary-foreground: 228 8% 80%;
+    --muted: 228 10% 14%;
+    --muted-foreground: 228 6% 46%;
+    --accent: 228 10% 16%;
+    --accent-foreground: 228 8% 85%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5% 15%;
-    --input: 240 5% 15%;
-    --ring: 234 65% 65%;
+    --border: 228 10% 18%;
+    --input: 228 10% 18%;
+    --ring: 224 70% 60%;
 
-    --sidebar-background: 240 6% 5%;
-    --sidebar-foreground: 240 4% 50%;
+    --sidebar-background: 228 14% 6%;
+    --sidebar-foreground: 220 8% 55%;
     --sidebar-primary: 0 0% 95%;
-    --sidebar-primary-foreground: 240 6% 5%;
-    --sidebar-accent: 240 5% 10%;
+    --sidebar-primary-foreground: 228 14% 6%;
+    --sidebar-accent: 224 18% 12%;
     --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 240 5% 10%;
-    --sidebar-ring: 234 65% 65%;
+    --sidebar-border: 228 10% 12%;
+    --sidebar-ring: 224 70% 60%;
 
     --health-green: 152 55% 50%;
     --health-amber: 38 92% 55%;
     --health-red: 0 62% 50%;
 
-    --chart-1: 234 65% 65%;
+    --chart-1: 224 70% 60%;
     --chart-2: 152 55% 50%;
     --chart-3: 38 92% 55%;
     --chart-4: 280 50% 65%;
@@ -134,14 +134,57 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
 }
 
+/* Premium layered shadows (Stripe-style) */
+.shadow-soft {
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 4px 12px hsl(0 0% 0% / 0.06);
+}
+.shadow-soft-lg {
+  box-shadow:
+    0 2px 4px hsl(0 0% 0% / 0.04),
+    0 8px 24px hsl(0 0% 0% / 0.08);
+}
+
+/* Warm glass effect */
+.glass {
+  background: hsl(var(--card) / 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass {
+  background: hsl(var(--card) / 0.5);
+}
+
+/* Animations */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in {
   animation: fade-in 0.25s ease-out;
+}
+
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.35s ease-out;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
 }
 
 @keyframes pulse-subtle {
@@ -151,3 +194,14 @@
 .animate-pulse-subtle {
   animation: pulse-subtle 2s ease-in-out infinite;
 }
+
+/* Staggered entrance for card grids */
+.stagger > * {
+  animation: slide-up-fade 0.35s ease-out both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }

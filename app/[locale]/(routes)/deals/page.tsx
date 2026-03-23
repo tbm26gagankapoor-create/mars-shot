@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { getDealsByStage, getDraftDeals, getBreachedDeals } from "@/actions/deals";
+import { getDealsByStage, getDraftDealCount, getBreachedDealCount } from "@/actions/deals";
 import { KanbanBoard } from "@/components/deals/kanban-board";
 import { DealsTable } from "@/components/deals/deals-table";
+import { FunnelView } from "@/components/deals/funnel-view";
 
 export default async function DealsPage() {
   let dealsByStage: Record<string, unknown[]> = {};
@@ -16,8 +17,8 @@ export default async function DealsPage() {
   try {
     [dealsByStage, draftCount, breachedCount] = await Promise.all([
       getDealsByStage() as Promise<Record<string, unknown[]>>,
-      getDraftDeals().then((d) => d.length),
-      getBreachedDeals().then((d) => d.length),
+      getDraftDealCount(),
+      getBreachedDealCount(),
     ]);
     allDeals = Object.values(dealsByStage).flat();
   } catch {
@@ -63,6 +64,7 @@ export default async function DealsPage() {
         <TabsList>
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
           <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsTrigger value="funnel">Funnel</TabsTrigger>
         </TabsList>
 
         <TabsContent value="kanban" className="mt-4">
@@ -71,6 +73,10 @@ export default async function DealsPage() {
 
         <TabsContent value="table" className="mt-4">
           <DealsTable deals={allDeals as never} />
+        </TabsContent>
+
+        <TabsContent value="funnel" className="mt-4">
+          <FunnelView dealsByStage={dealsByStage as never} />
         </TabsContent>
       </Tabs>
     </div>

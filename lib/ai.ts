@@ -22,6 +22,17 @@ export type AIExtractionResult = {
   sourceType?: string;
   summary?: string;
   confidence: number;
+  // Phase 8 — additional extracted fields
+  description?: string;
+  revenue?: number;
+  revenueType?: string;
+  location?: string;
+  teamSize?: number;
+  businessModel?: string;
+  tags?: string[];
+  totalRoundSize?: number;
+  preMoneyValuation?: number;
+  existingInvestors?: string;
 };
 
 /**
@@ -46,7 +57,17 @@ JSON schema:
   "source": "who referred this deal (string or null)",
   "sourceType": "one of: INBOUND, VC_FORWARD, COLD_DM, RAZORPAY_NETWORK, EMAIL_FORWARD, OTHER",
   "summary": "1-2 sentence summary of the opportunity",
-  "confidence": "0-100 integer, how confident you are in the extraction"
+  "confidence": "0-100 integer, how confident you are in the extraction",
+  "description": "one-line company description or null",
+  "revenue": "number in USD or null (current revenue figure)",
+  "revenueType": "one of: MRR, ARR, GMV, NONE or null",
+  "location": "HQ city/country or null",
+  "teamSize": "integer headcount or null",
+  "businessModel": "one of: SAAS, MARKETPLACE, TRANSACTIONAL, D2C_ECOMMERCE, ADVERTISING, OTHER or null",
+  "tags": "array of short labels (e.g. AI-native, repeat founder, B2B) or empty array",
+  "totalRoundSize": "number in USD or null (total raise target)",
+  "preMoneyValuation": "number in USD or null",
+  "existingInvestors": "comma-separated investor names or null"
 }`,
       },
       {
@@ -56,7 +77,7 @@ JSON schema:
     ],
     response_format: { type: "json_object" },
     temperature: 0.1,
-    max_completion_tokens: 1024,
+    max_completion_tokens: 2048,
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

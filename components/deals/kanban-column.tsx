@@ -19,11 +19,11 @@ export function KanbanColumn({ stageKey, label, slaHours, deals }: KanbanColumnP
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col min-w-[280px] max-w-[280px] rounded-lg border bg-muted/20 ${
-        isOver ? "ring-2 ring-primary" : ""
+      className={`flex flex-col min-w-[280px] max-w-[280px] rounded-xl border bg-card/50 backdrop-blur-sm shadow-soft transition-all duration-200 ${
+        isOver ? "ring-2 ring-primary/50 shadow-soft-lg" : ""
       }`}
     >
-      <div className="p-3 border-b">
+      <div className="p-3 border-b bg-muted/30 rounded-t-xl">
         <div className="flex items-center justify-between">
           <h3 className="font-display font-semibold text-sm truncate">{label}</h3>
           <Badge variant="secondary" className="text-xs">
@@ -42,8 +42,11 @@ export function KanbanColumn({ stageKey, label, slaHours, deals }: KanbanColumnP
             <DealCard key={deal.id} deal={deal} />
           ))}
           {deals.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-8">
-              No deals
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center mb-3">
+                <span className="text-muted-foreground/50 text-lg">0</span>
+              </div>
+              <p className="text-xs text-muted-foreground/70">No deals in this stage</p>
             </div>
           )}
         </SortableContext>

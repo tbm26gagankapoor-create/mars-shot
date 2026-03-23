@@ -7,6 +7,7 @@ import { CONTACT_TYPES, WARMTH_SCORES, SECTOR_LABELS } from "@/lib/constants";
 import { AlertTriangle, Users, Building2, Activity } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { AddContactDialog } from "@/components/ecosystem/add-contact-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 
 function getWarmthBadge(warmth: string) {
   const config = WARMTH_SCORES.find((w) => w.key === warmth);
@@ -41,7 +42,7 @@ export default async function EcosystemPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -71,14 +72,12 @@ export default async function EcosystemPage() {
       {/* Contact List */}
       {contacts.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
-              <Users className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-display font-medium">No contacts yet</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Add your first VC, co-investor, or operator to get started
-            </p>
+          <CardContent className="py-4">
+            <EmptyState
+              icon={Users}
+              title="No contacts yet"
+              description="Add your first VC, co-investor, or operator to get started"
+            />
           </CardContent>
         </Card>
       ) : (
@@ -95,7 +94,7 @@ export default async function EcosystemPage() {
                 <Link
                   key={contact.id}
                   href={`/ecosystem/${contact.id}`}
-                  className="flex items-center justify-between py-3 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors group first:pt-0"
+                  className="flex items-center justify-between py-3 px-2 -mx-2 rounded-md hover:bg-accent/60 transition-colors duration-150 group first:pt-0"
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     {/* Name + org */}

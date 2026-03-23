@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="mars-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+    <linearGradient id="trail-grad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.9"/>
+    </linearGradient>
+    <clipPath id="rounded">
+      <rect width="512" height="512" rx="112" ry="112"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#rounded)">
+    <!-- Background -->
+    <rect width="512" height="512" rx="112" ry="112" fill="#18181b"/>
+
+    <!-- Mars planet -->
+    <circle cx="240" cy="290" r="140" fill="url(#mars-grad)" opacity="0.95"/>
+    <!-- Surface details -->
+    <ellipse cx="200" cy="260" rx="40" ry="25" fill="#ea580c" opacity="0.5"/>
+    <ellipse cx="290" cy="320" rx="30" ry="18" fill="#ea580c" opacity="0.4"/>
+    <circle cx="260" cy="240" r="15" fill="#c2410c" opacity="0.3"/>
+
+    <!-- Rocket / trajectory arrow shooting upward-right -->
+    <!-- Trail arc -->
+    <path d="M160 400 Q200 300 320 140" stroke="url(#trail-grad)" stroke-width="14" stroke-linecap="round" fill="none"/>
+    <!-- Trail glow particles -->
+    <circle cx="185" cy="360" r="4" fill="#fbbf24" opacity="0.5"/>
+    <circle cx="210" cy="320" r="3" fill="#fbbf24" opacity="0.4"/>
+    <circle cx="170" cy="385" r="3" fill="#f97316" opacity="0.3"/>
+
+    <!-- Rocket head (diamond/arrow shape) -->
+    <g transform="translate(320, 140) rotate(-55)">
+      <path d="M0 -32 L10 0 L6 4 L-6 4 L-10 0 Z" fill="white"/>
+      <!-- Rocket body -->
+      <rect x="-6" y="4" width="12" height="20" rx="2" fill="white"/>
+      <!-- Fins -->
+      <path d="M-6 18 L-14 28 L-6 24 Z" fill="#fbbf24"/>
+      <path d="M6 18 L14 28 L6 24 Z" fill="#fbbf24"/>
+      <!-- Flame -->
+      <path d="M-5 24 Q0 36 5 24" fill="#f97316"/>
+      <path d="M-3 24 Q0 32 3 24" fill="#fbbf24"/>
+    </g>
+
+    <!-- Stars -->
+    <circle cx="80" cy="80" r="3" fill="white" opacity="0.7"/>
+    <circle cx="420" cy="70" r="2.5" fill="white" opacity="0.6"/>
+    <circle cx="440" cy="200" r="2" fill="white" opacity="0.5"/>
+    <circle cx="390" cy="420" r="2.5" fill="white" opacity="0.4"/>
+    <circle cx="70" cy="200" r="2" fill="white" opacity="0.5"/>
+    <circle cx="130" cy="130" r="1.5" fill="white" opacity="0.4"/>
+    <circle cx="450" cy="350" r="1.5" fill="white" opacity="0.3"/>
+    <circle cx="350" cy="60" r="2" fill="white" opacity="0.5"/>
+    <circle cx="60" cy="350" r="2" fill="white" opacity="0.3"/>
+  </g>
+</svg>

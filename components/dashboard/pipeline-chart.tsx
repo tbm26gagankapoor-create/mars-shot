@@ -27,14 +27,14 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 const BAR_COLORS = [
-  "hsl(210, 80%, 55%)",
-  "hsl(210, 75%, 60%)",
-  "hsl(210, 70%, 65%)",
-  "hsl(200, 65%, 60%)",
-  "hsl(190, 60%, 55%)",
-  "hsl(170, 55%, 50%)",
-  "hsl(150, 60%, 45%)",
-  "hsl(130, 65%, 40%)",
+  "hsl(224, 76%, 48%)",
+  "hsl(220, 65%, 52%)",
+  "hsl(215, 55%, 50%)",
+  "hsl(210, 45%, 48%)",
+  "hsl(205, 40%, 52%)",
+  "hsl(200, 35%, 55%)",
+  "hsl(195, 30%, 52%)",
+  "hsl(190, 25%, 50%)",
 ];
 
 export function PipelineChart({ data }: PipelineChartProps) {
