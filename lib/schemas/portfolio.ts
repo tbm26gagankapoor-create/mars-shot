@@ -7,7 +7,7 @@ const healthStatusEnum = z.enum(["ON_TRACK", "WATCH", "AT_RISK", "WRITE_OFF"]);
 // ─── KPI Snapshot schema ─────────────────────────────
 
 export const kpiSnapshotSchema = z.object({
-  periodDate: z.coerce.date({ required_error: "Month is required" }),
+  periodDate: z.coerce.date({ error: "Month is required" }),
   arr: z.coerce.number().nonnegative("Must be non-negative").optional(),
   mrr: z.coerce.number().nonnegative("Must be non-negative").optional(),
   burnRate: z.coerce.number().nonnegative("Must be non-negative").optional(),
